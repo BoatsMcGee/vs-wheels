@@ -3,6 +3,8 @@ name: Update Package Index
 on:
   workflow_call:
   workflow_dispatch:
+  repository_dispatch:
+    types: ["index"]
 
 permissions:
   contents: read

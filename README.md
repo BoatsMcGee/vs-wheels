@@ -107,6 +107,8 @@ Available on [PyPI](https://pypi.org/project/vapoursynth-bm3dcpu/).
 - **2.16.3**: Yanked.
 - **2.16.4**: Matches upstream R2.16. Requires VapourSynth R75.
 
+---
+
 ### **BM3DCUDA**
 
 Available on [PyPI](https://pypi.org/project/vapoursynth-bm3dcuda/).
@@ -117,6 +119,8 @@ Available on [PyPI](https://pypi.org/project/vapoursynth-bm3dcuda/).
 - **2.17.dev1**:
   - **Windows**: Compiled with CUDA 13.2.1 and Visual Studio 2026.
   - **Linux**: Compiled with CUDA 13.2.
+
+---
 
 ### **BM3DHIP**
 
@@ -129,6 +133,8 @@ Available on [PyPI](https://pypi.org/project/vapoursynth-bm3dhip/).
   - **Windows**: Compiled with HIP 7.1.1 and Visual Studio 2026.
   - **Linux**: Compiled with HIP 7.2.2.
 
+---
+
 ### **DFTTEST2**
 
 Available on [PyPI](https://pypi.org/project/dfttest2/).
@@ -137,20 +143,25 @@ This is the meta-package providing the Python interface and backend dependencies
 
 - **10**: Matches upstream release v10
 
-More information [here](https://github.com/Jaded-Encoding-Thaumaturgy/vs-wheels/blob/master/dfttest2/dfttest2/README.md).
+## More information [here](https://github.com/Jaded-Encoding-Thaumaturgy/vs-wheels/blob/master/dfttest2/dfttest2/README.md).
 
 ### **DFTTEST2_GCC**
 
 Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-gcc/).
 
 - **10**: Matches upstream release v10
+
   Available on all platforms.
+
+---
 
 ### **DFTTEST2_CPU**
 
 Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-cpu/).
 
 - **10**: Matches upstream release v10
+
+---
 
 ### **DFTTEST2_NVRTC**
 
@@ -162,6 +173,8 @@ Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-nvrtc/).
 - **11.dev1**:
   - **Windows**: Compiled with CUDA 13.2.1 and Visual Studio 2026.
   - **Linux**: Compiled with CUDA 13.2.
+
+---
 
 ### **DFTTEST2_CUDA**
 
@@ -180,6 +193,8 @@ Sdist is available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-cuda/
   - **Windows**: Compiled with CUDA 13.2.1 and Visual Studio 2026.
   - **Linux**: Compiled with CUDA 13.2.
 
+---
+
 ### **DFTTEST2_HIP**
 
 Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-hip).
@@ -191,6 +206,8 @@ Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-hip).
   - **Windows**: Compiled with HIP 7.1.1 and Visual Studio 2026.
   - **Linux**: Compiled with HIP 7.2.2.
 
+---
+
 ### **DFTTEST2_HIPRTC**
 
 Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-hiprtc).
@@ -201,6 +218,8 @@ Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-hiprtc).
 - **11.dev1**:
   - **Windows**: Compiled with HIP 7.1.1 and Visual Studio 2026.
   - **Linux**: Compiled with HIP 7.2.2.
+
+---
 
 ### **FFMS2**
 
@@ -215,6 +234,8 @@ pip install vapoursynth-ffms2 --extra-index-url https://jaded-encoding-thaumatur
 
   Matches upstream [ffms2@master#3af2ef2ae47bc30b64597c9e419e5b19c4bda7d8](https://github.com/FFMS/ffms2/commit/3af2ef2ae47bc30b64597c9e419e5b19c4bda7d8)
 
+---
+
 ### **FMTCONV / FMTC**
 
 Available on [vs-wheels index](https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple/vapoursynth-fmtconv/index.html) and on all platforms.
@@ -225,5 +246,7 @@ pip install vapoursynth-fmtconv --extra-index-url https://jaded-encoding-thaumat
 
 - **31**: Matches upstream release R31.
   - **Windows**: Compiled with Visual Studio 2026.
+
+---
 
 ### **VS-MLRT**

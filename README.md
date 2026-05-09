@@ -185,7 +185,14 @@ Available on PyPI.
   - **Windows**: Compiled with HIP 7.1.1 and Visual Studio 2026.
   - **Linux**: Compiled with HIP 7.2.2.
 
-### **VS-MLRT**
+### **FFMS2**
+
+Available on vs-wheels index for Windows, macOS and Linux (glibc x86_64, aarch64 and musl x86_64)
+
+- **5.2.1**: Compiled with **F**ast **F**orward **M**oving **P**icture **E**xperts **G**roup **8.1** from the vcpkg 2026.04.27 Release.
+  - **Windows**: Compiled with Visual Studio 2026
+
+  Matches upstream [ffms2@master#3af2ef2ae47bc30b64597c9e419e5b19c4bda7d8](https://github.com/FFMS/ffms2/commit/3af2ef2ae47bc30b64597c9e419e5b19c4bda7d8)
 
 ### **FMTCONV / FMTC**
 
@@ -193,3 +200,5 @@ Available on vs-wheels index and on all platforms.
 
 - **31**: Matches upstream release R31.
   - **Windows**: Compiled with Visual Studio 2026.
+
+### **VS-MLRT**

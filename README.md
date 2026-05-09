@@ -99,7 +99,7 @@ $env:UV_INDEX = "https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple"
 
 ### **BM3DCPU**
 
-Available on PyPI.
+Available on [PyPI](https://pypi.org/project/vapoursynth-bm3dcpu/).
 
 - **2.16**: Yanked.
 - **2.16.1**: Yanked.
@@ -109,7 +109,7 @@ Available on PyPI.
 
 ### **BM3DCUDA**
 
-Available on PyPI.
+Available on [PyPI](https://pypi.org/project/vapoursynth-bm3dcuda/).
 
 - **2.16**: Matches upstream release R2.16.
   - **Windows**: Compiled with CUDA 13.0.1 and Visual Studio 2022.
@@ -120,7 +120,7 @@ Available on PyPI.
 
 ### **BM3DHIP**
 
-Available on PyPI.
+Available on [PyPI](https://pypi.org/project/vapoursynth-bm3dhip/).
 
 - **2.16**: Matches upstream release R2.16.
   - **Windows**: Compiled with HIP 6.4.2 and Visual Studio 2022.
@@ -131,7 +131,7 @@ Available on PyPI.
 
 ### **DFTTEST2**
 
-Available on PyPI.
+Available on [PyPI](https://pypi.org/project/dfttest2/).
 
 This is the meta-package providing the Python interface and backend dependencies via extras to simplify installation.
 
@@ -141,20 +141,20 @@ More information [here](https://github.com/Jaded-Encoding-Thaumaturgy/vs-wheels/
 
 ### **DFTTEST2_GCC**
 
-Available on PyPI.
+Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-gcc/).
 
 - **10**: Matches upstream release v10
   Available on all platforms.
 
 ### **DFTTEST2_CPU**
 
-Available on PyPI.
+Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-cpu/).
 
 - **10**: Matches upstream release v10
 
 ### **DFTTEST2_NVRTC**
 
-Available on PyPI.
+Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-nvrtc/).
 
 - **10**: Matches upstream release v10
   - **Windows**: Compiled with CUDA 13.0.1 and Visual Studio 2022.
@@ -165,7 +165,13 @@ Available on PyPI.
 
 ### **DFTTEST2_CUDA**
 
-Wheels are available on vs-wheels index.
+Wheels are available on [vs-wheels index](https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple/vapoursynth-dfttest2-cuda/index.html).
+
+```bash
+pip install vapoursynth-dfttest2-cuda --extra-index-url https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple
+```
+
+Sdist is available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-cuda/).
 
 - **10** / **10.post1**: Matches upstream release v10
   - **Windows**: Compiled with CUDA 13.0.1 and Visual Studio 2022.
@@ -174,9 +180,20 @@ Wheels are available on vs-wheels index.
   - **Windows**: Compiled with CUDA 13.2.1 and Visual Studio 2026.
   - **Linux**: Compiled with CUDA 13.2.
 
+### **DFTTEST2_HIP**
+
+Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-hip).
+
+- **10**:
+  - **Windows**: Compiled with HIP 7.1.1 and Visual Studio 2026.
+  - **Linux**: Compiled with HIP 7.0.
+- **11.dev1**:
+  - **Windows**: Compiled with HIP 7.1.1 and Visual Studio 2026.
+  - **Linux**: Compiled with HIP 7.2.2.
+
 ### **DFTTEST2_HIPRTC**
 
-Available on PyPI.
+Available on [PyPI](https://pypi.org/project/vapoursynth-dfttest2-hiprtc).
 
 - **10**:
   - **Windows**: Compiled with HIP 7.1.1 and Visual Studio 2026.
@@ -187,7 +204,11 @@ Available on PyPI.
 
 ### **FFMS2**
 
-Available on vs-wheels index for Windows, macOS and Linux (glibc x86_64, aarch64 and musl x86_64)
+Available on [vs-wheels index](https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple/vapoursynth-ffms2/index.html) for Windows, macOS and Linux (glibc x86_64, aarch64 and musl x86_64)
+
+```bash
+pip install vapoursynth-ffms2 --extra-index-url https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple
+```
 
 - **5.2.1**: Compiled with **F**ast **F**orward **M**oving **P**icture **E**xperts **G**roup **8.1** from the vcpkg 2026.04.27 Release.
   - **Windows**: Compiled with Visual Studio 2026
@@ -196,7 +217,11 @@ Available on vs-wheels index for Windows, macOS and Linux (glibc x86_64, aarch64
 
 ### **FMTCONV / FMTC**
 
-Available on vs-wheels index and on all platforms.
+Available on [vs-wheels index](https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple/vapoursynth-fmtconv/index.html) and on all platforms.
+
+```bash
+pip install vapoursynth-fmtconv --extra-index-url https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple
+```
 
 - **31**: Matches upstream release R31.
   - **Windows**: Compiled with Visual Studio 2026.

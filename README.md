@@ -143,7 +143,7 @@ This is the meta-package providing the Python interface and backend dependencies
 
 - **10**: Matches upstream release v10
 
-## More information [here](https://github.com/Jaded-Encoding-Thaumaturgy/vs-wheels/blob/master/dfttest2/dfttest2/README.md).
+More information [here](https://github.com/Jaded-Encoding-Thaumaturgy/vs-wheels/blob/master/dfttest2/dfttest2/README.md).
 
 ### **DFTTEST2_GCC**
 

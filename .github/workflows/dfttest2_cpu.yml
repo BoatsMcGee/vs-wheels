@@ -61,11 +61,7 @@ jobs:
 
       - name: Setup MSVC
         if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          . ./scripts/Enter-DevShell.ps1
-          $envVars = "INCLUDE", "LIB", "LIBPATH", "UCRTVersion", "VCToolsVersion", "WindowsSdkDir", "PATH"
-          $envVars | ForEach-Object { if (Test-Path "Env:$_") { "$_=$((Get-Content Env:\$_))" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8 } }
+        uses: ./.github/actions/setup-msvc
 
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1

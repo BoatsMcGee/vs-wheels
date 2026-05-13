@@ -1,0 +1,12 @@
+name: Setup MSVC
+description: Configure MSVC environment variables
+
+runs:
+  using: composite
+  steps:
+    - name: Setup MSVC
+      shell: pwsh
+      run: |
+        . ./scripts/Enter-DevShell.ps1
+        $envVars = "INCLUDE", "LIB", "LIBPATH", "UCRTVersion", "VCToolsVersion", "WindowsSdkDir", "PATH"
+        $envVars | ForEach-Object { if (Test-Path "Env:$_") { "$_=$((Get-Content Env:\$_))" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8 } }

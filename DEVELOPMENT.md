@@ -44,3 +44,15 @@ git -C bm3dcuda/bm3dcpu/vapoursynth checkout R57
 git add bm3dcuda/bm3dcpu/vapoursynth
 git commit -m "chore: update vapoursynth submodule to R57"
 ```
+
+### Adding a Submodule
+
+```powershell
+& .\scripts\Add-Submodule.ps1 https://github.com/onnx/onnx.git vsmlrt/ncnn/onnx v1.19.0
+```
+
+### Removing a Submodule
+
+```powershell
+& .\scripts\Remove-Submodule.ps1 path/to/submodule
+```

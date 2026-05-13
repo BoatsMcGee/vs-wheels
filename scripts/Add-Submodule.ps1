@@ -2,11 +2,11 @@
 .SYNOPSIS
     Adds a submodule, checks out a specific tag, and stages the changes.
 .PARAMETER $GitUrl
-    The URL of the git to clone as submodule
+    The URL of the git repository to clone as a submodule.
 .PARAMETER $Path
-    The URL of the git to clone as submodule
+    The destination path for the submodule.
 .PARAMETER $Tag
-    The URL of the git to clone as submodule
+    Optional tag or branch to checkout after adding the submodule.
 #>
 
 param (
@@ -17,8 +17,15 @@ param (
     [string]$Tag = ""
 )
 
-git submodule add $GitUrl $Path
+Write-Host "Adding submodule $GitUrl as $Path..." -ForegroundColor Cyan
+git submodule add --force $GitUrl $Path
+
 if (-not [string]::IsNullOrWhiteSpace($Tag)) {
+    Write-Host "Checking out tag $Tag..." -ForegroundColor Cyan
     git -C $Path checkout $Tag
 }
+
+Write-Host "Staging submodule at $Path..." -ForegroundColor Cyan
 git add $Path
+
+Write-Host "Submodule at $Path has been added." -ForegroundColor Green

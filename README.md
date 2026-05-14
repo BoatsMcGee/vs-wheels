@@ -249,4 +249,32 @@ pip install vapoursynth-fmtconv --extra-index-url https://jaded-encoding-thaumat
 
 ---
 
-### **VS-MLRT**
+### **MLRT NCNN**
+
+<!-- Available on [PyPI](https://pypi.org/project/vapoursynth-mlrt-ncnn). -->
+
+- **15.16**:
+  - **Windows**: Compiled with Visual Studio 2022.
+
+    Dependencies:
+    - ONNX: 1.19.0
+    - protobuf: 31.1.0
+    - NCNN: 86efe80b50408bfeca79761edcb3fa4b4e513331 (20250503 + 1)
+    - Vulkan: 1.4.321.1
+    - OpenMP: 2.0
+
+  - **Linux**: Compiled with GCC 13
+
+    Dependencies:
+    - ONNX: 1.19.0
+    - protobuf: 31.1.0
+    - NCNN: 20250503
+    - Vulkan: 1.4.321.1
+    - OpenMP: 4.5
+
+  - **macOS ARM64**: Compiled with AppleClang 17
+    - ONNX: 1.21.0
+    - protobuf: 31.1.0
+    - NCNN: 20260113
+    - Vulkan: 1.4.350.0
+    - OpenMP: 5.1

@@ -40,6 +40,11 @@ on:
         type: string
         required: false
         default: "v1.19.0"
+      onnx-macos-tag:
+        description: ONNX tag for macOS (https://github.com/onnx/onnx)
+        type: string
+        required: false
+        default: "v1.21.0"
       ncnn-windows-tag:
         description: NCNN tag for Windows (https://github.com/Tencent/ncnn)
         type: string
@@ -50,6 +55,11 @@ on:
         type: string
         required: false
         default: "20250503"
+      ncnn-macOS-tag:
+        description: NCNN tag for macOS (https://github.com/Tencent/ncnn)
+        type: string
+        required: false
+        default: "20260113"
       vulkan-windows-version:
         description: Vulkan version for Windows (https://vulkan.lunarg.com/sdk/home)
         type: string
@@ -73,8 +83,10 @@ on:
 env:
   ONNX_WINDOWS_TAG: ${{ inputs.onnx-windows-tag || 'v1.19.0' }}
   ONNX_LINUX_TAG: ${{ inputs.onnx-linux-tag || 'v1.19.0' }}
+  ONNX_MACOS_TAG: ${{ inputs.onnx-linux-tag || 'v1.21.0' }}
   NCNN_WINDOWS_TAG: ${{ inputs.ncnn-windows-tag || '86efe80b50408bfeca79761edcb3fa4b4e513331' }}
   NCNN_LINUX_TAG: ${{ inputs.ncnn-linux-tag || '20250503' }}
+  NCNN_MACOS_TAG: ${{ inputs.ncnn-linux-tag || '20260113' }}
   VULKAN_WINDOWS_VERSION: ${{ inputs.vulkan-windows-version || '1.4.321.1' }}
   VULKAN_LINUX_VERSION: ${{ inputs.vulkan-linux-version || '1.4.321.1' }}
   VULKAN_MACOS_VERSION: ${{ inputs.vulkan-macos-version || '1.4.350.0' }}
@@ -133,7 +145,7 @@ jobs:
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup-onnx-macos
         with:
-          onnx-tag: ${{ env.ONNX_LINUX_TAG }}
+          onnx-tag: ${{ env.ONNX_MACOS_TAG }}
 
       - name: Build NCNN dependency (Windows)
         if: runner.os == 'Windows'
@@ -153,7 +165,7 @@ jobs:
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup-ncnn-macos
         with:
-          ncnn-tag: ${{ env.NCNN_LINUX_TAG }}
+          ncnn-tag: ${{ env.NCNN_MACOS_TAG }}
           vulkan-version: ${{ env.VULKAN_MACOS_VERSION }}
 
       - name: Build wheel

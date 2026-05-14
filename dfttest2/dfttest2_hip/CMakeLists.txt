@@ -26,7 +26,8 @@ if(WIN32 AND ENABLE_HIP)
 
   if(HIP_ROOT_DIR)
     set(HIP_BIN_DIR "${HIP_ROOT_DIR}/bin")
-    file(GLOB HIP_DLLS 
+    file(
+      GLOB HIP_DLLS
       "${HIP_BIN_DIR}/amdhip64_*.dll"
       "${HIP_BIN_DIR}/hipfft.dll"
       "${HIP_BIN_DIR}/hiprtc[0-9]*.dll"

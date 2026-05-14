@@ -75,7 +75,7 @@ env:
   VULKAN_WINDOWS_VERSION: ${{ inputs.vulkan-windows-version || '1.4.321.1' }}
   VULKAN_LINUX_VERSION: ${{ inputs.vulkan-linux-version || '1.4.321.1' }}
   VULKAN_MACOS_VERSION: ${{ inputs.vulkan-macos-version || '1.4.350.0' }}
-  PACKAGE_NAME: mlrt-ncnn
+  PACKAGE_NAME: ncnn
 
 jobs:
   build-wheels:
@@ -164,7 +164,7 @@ jobs:
           vulkan-version: ${{ env.VULKAN_MACOS_VERSION }}
 
       - name: Build wheel
-        run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}
+        run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_NCNN: ${{ inputs.version }}
 
@@ -208,7 +208,7 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Build sdist
-        run: uv build --sdist --package vapoursynth-${{ env.PACKAGE_NAME }}
+        run: uv build --sdist --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_NCNN: ${{ inputs.version }}
 

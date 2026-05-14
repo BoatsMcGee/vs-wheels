@@ -27,7 +27,7 @@ on:
           - testpypi
           - pypi
       version:
-        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_NCNN)
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_NCNN)
         type: string
         required: false
       onnx-windows-tag:
@@ -166,7 +166,7 @@ jobs:
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_NCNN: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_NCNN: ${{ inputs.version }}
 
       - name: Repair wheel (Linux)
         if: runner.os == 'Linux'

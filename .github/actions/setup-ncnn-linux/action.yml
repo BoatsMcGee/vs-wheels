@@ -1,0 +1,73 @@
+name: Setup NCNN (Linux)
+description: Builds NCNN for Linux
+inputs:
+  ncnn-tag:
+    description: The Git tag or commit hash of NCNN to build
+    required: true
+  vulkan-version:
+    description: The version of the Vulkan SDK to use
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Restore NCNN
+      id: cache-ncnn
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: ncnn-dist
+        key: setup-ncnn-${{ runner.os }}-${{ runner.arch }}-${{ inputs.ncnn-tag }}-vulkan-${{ inputs.vulkan-version }}
+
+    - name: Install Vulkan SDK
+      if: steps.cache-ncnn.outputs.cache-hit != 'true'
+      uses: jakoch/install-vulkan-sdk-action@3c53c378c9bfbb2ea122a1cc164a837d4004c871 # v1.5.2
+      with:
+        vulkan_version: ${{ inputs.vulkan-version }}
+
+    - name: Install dependencies
+      if: steps.cache-ncnn.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install -y libprotobuf-dev protobuf-compiler libomp-dev ninja-build
+
+    - name: Checkout ncnn
+      if: steps.cache-ncnn.outputs.cache-hit != 'true'
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        repository: Tencent/ncnn
+        ref: ${{ inputs.ncnn-tag }}
+        path: ncnn
+        submodules: recursive
+
+    - name: Build NCNN
+      if: steps.cache-ncnn.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        cmake -S ncnn -B build_ncnn -G Ninja \
+          -D CMAKE_BUILD_TYPE=Release \
+          -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+          -D NCNN_VULKAN=ON \
+          -D NCNN_BUILD_BENCHMARK=OFF \
+          -D NCNN_BUILD_EXAMPLES=OFF \
+          -D NCNN_BUILD_TESTS=OFF \
+          -D NCNN_BUILD_TOOLS=OFF \
+          -D NCNN_ENABLE_LTO=ON \
+          -D NCNN_PYTHON=OFF \
+          -D NCNN_RUNTIME_CPU=ON
+
+        cmake --build build_ncnn
+        cmake --install build_ncnn --prefix ncnn-dist
+
+    - name: Save NCNN
+      if: steps.cache-ncnn.outputs.cache-hit != 'true'
+      uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: ncnn-dist
+        key: setup-ncnn-${{ runner.os }}-${{ runner.arch }}-${{ inputs.ncnn-tag }}-vulkan-${{ inputs.vulkan-version }}
+
+    - name: Configure NCNN Path
+      shell: bash
+      run: |
+        ncnnRoot=$(realpath ncnn-dist)
+        echo "CMAKE_PREFIX_PATH=$ncnnRoot${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}" >> $GITHUB_ENV

@@ -263,6 +263,7 @@ __marimo__/
 build/
 Build/
 build-*/
+build_*/
 
 # CMake generated files
 CMakeFiles/
@@ -287,3 +288,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Custom distributions
+ncnn-dist/
+onnx-dist/

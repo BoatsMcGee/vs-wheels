@@ -79,3 +79,6 @@
 [submodule "vsmlrt/migx/vs-mlrt"]
 	path = vsmlrt/migx/vs-mlrt
 	url = https://github.com/AmusementClub/vs-mlrt/
+[submodule "vsmlrt/ncnn/vapoursynth"]
+	path = vsmlrt/ncnn/vapoursynth
+	url = https://github.com/vapoursynth/vapoursynth.git

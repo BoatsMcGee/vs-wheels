@@ -37,6 +37,7 @@ members = [
     "dfttest2/dfttest2_nvrtc",
     "dfttest2/dfttest2_hip",
     "dfttest2/dfttest2_hiprtc",
+    "vsmlrt/ncnn",
 ]
 
 [tool.mypy]

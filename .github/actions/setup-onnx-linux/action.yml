@@ -1,0 +1,62 @@
+name: Setup ONNX (Linux)
+description: Compiles ONNX from source on Linux
+inputs:
+  onnx-tag:
+    description: The Git tag or commit hash of ONNX to build
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Restore ONNX
+      id: cache-onnx
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: onnx-dist
+        key: setup-onnx-${{ runner.os }}-${{ runner.arch }}-${{ inputs.onnx-tag }}
+
+    - name: Checkout onnx
+      if: steps.cache-onnx.outputs.cache-hit != 'true'
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        repository: onnx/onnx
+        ref: ${{ inputs.onnx-tag }}
+        path: onnx
+        submodules: recursive
+
+    - name: Configure ONNX
+      shell: bash
+      if: steps.cache-onnx.outputs.cache-hit != 'true'
+      run:
+        cmake -S onnx -B build_onnx -G Ninja -LA
+        -D CMAKE_BUILD_TYPE=Release
+        -D CMAKE_POSITION_INDEPENDENT_CODE=ON
+        -D ONNX_USE_LITE_PROTO=ON
+        -D ONNX_USE_PROTOBUF_SHARED_LIBS=OFF
+        -D ONNX_GEN_PB_TYPE_STUBS=OFF
+        -D ONNX_ML=0
+        -D ONNX_BUILD_CUSTOM_PROTOBUF=ON
+        # -D CMAKE_CXX_FLAGS="-include cstdint"
+
+    - name: Build onnx
+      shell: bash
+      if: steps.cache-onnx.outputs.cache-hit != 'true'
+      run: cmake --build build_onnx
+
+    - name: Install ONNX
+      shell: bash
+      if: steps.cache-onnx.outputs.cache-hit != 'true'
+      run: cmake --install build_onnx --prefix onnx-dist
+
+    - name: Save ONNX
+      if: steps.cache-onnx.outputs.cache-hit != 'true'
+      uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: onnx-dist
+        key: setup-onnx-${{ runner.os }}-${{ runner.arch }}-${{ inputs.onnx-tag }}
+
+    - name: Configure ONNX Path
+      shell: bash
+      run: |
+        onnxRoot=$(realpath onnx-dist)
+        echo "CMAKE_PREFIX_PATH=$onnxRoot${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}" >> $GITHUB_ENV

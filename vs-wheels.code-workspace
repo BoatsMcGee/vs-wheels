@@ -45,6 +45,10 @@
       "path": "dfttest2/dfttest2_hiprtc",
     },
     {
+      "name": "VSMLRT NCNN",
+      "path": "vsmlrt/ncnn",
+    },
+    {
       "name": "vs-wheels (Root)",
       "path": ".",
     },

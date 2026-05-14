@@ -56,7 +56,7 @@ on:
         required: false
         default: "1.4.321.1"
       vulkan-linux-version:
-        description: Vulkan version for Linux (ARM64 only) (https://vulkan.lunarg.com/sdk/home)
+        description: Vulkan version for Linux (ARM64 only) (https://github.com/jakoch/vulkan-sdk-arm)
         type: string
         required: false
         default: "1.4.321.1"

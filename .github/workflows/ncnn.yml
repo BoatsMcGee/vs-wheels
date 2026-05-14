@@ -56,7 +56,10 @@ on:
         required: false
         default: "1.4.321.1"
       vulkan-linux-version:
-        description: Vulkan version for Linux (ARM64 only) (https://github.com/jakoch/vulkan-sdk-arm)
+        description: >-
+          Vulkan version for Linux
+          (https://vulkan.lunarg.com/sdk/home for x86)
+          (https://github.com/jakoch/vulkan-sdk-arm for ARM64)
         type: string
         required: false
         default: "1.4.321.1"
@@ -139,18 +142,8 @@ jobs:
           ncnn-tag: ${{ env.NCNN_WINDOWS_TAG }}
           vulkan-version: ${{ env.VULKAN_WINDOWS_VERSION }}
 
-      - name: Download NCNN dependency (Linux x64)
-        if: runner.os == 'Linux' && runner.arch == 'x64'
-        shell: bash
-        run: |
-          curl -s -o ncnn-dist.zip -LJO \
-            https://github.com/Tencent/ncnn/releases/download/${{ env.NCNN_LINUX_TAG }}/ncnn-${{ env.NCNN_LINUX_TAG }}-ubuntu-2404.zip
-          unzip -q ncnn-dist.zip -d ncnn-dist
-          ncnnRoot=$(realpath ncnn-dist)
-          echo "CMAKE_PREFIX_PATH=$ncnnRoot${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
-
-      - name: Build NCNN dependency (ARM64)
-        if: runner.os == 'Linux' && runner.arch == 'ARM64'
+      - name: Build NCNN dependency (Linux)
+        if: runner.os == 'Linux'
         uses: ./.github/actions/setup-ncnn-linux
         with:
           ncnn-tag: ${{ env.NCNN_LINUX_TAG }}

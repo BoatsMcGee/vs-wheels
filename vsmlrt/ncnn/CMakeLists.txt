@@ -8,6 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(ncnn REQUIRED)
 find_package(Protobuf REQUIRED CONFIG)
 find_package(ONNX REQUIRED)
+find_package(Vulkan REQUIRED)
 
 set(
   VAPOURSYNTH_INCLUDE_DIRECTORY
@@ -24,12 +25,9 @@ set_target_properties(
 
 target_include_directories(vsncnn PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}")
 target_link_libraries(vsncnn PRIVATE ncnn ONNX::onnx)
+target_link_libraries(vsncnn PRIVATE Vulkan::Vulkan)
 
 if(APPLE)
-  find_package(Vulkan)
-  if(Vulkan_FOUND)
-    target_link_libraries(vsncnn PRIVATE Vulkan::Vulkan)
-  endif()
   target_link_libraries(
     vsncnn
     PRIVATE

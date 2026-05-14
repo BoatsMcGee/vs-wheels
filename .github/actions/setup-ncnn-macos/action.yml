@@ -25,7 +25,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: brew install protobuf
+      run: brew install protobuf libomp
 
     - name: Checkout ncnn
       if: steps.cache-ncnn.outputs.cache-hit != 'true'
@@ -43,9 +43,10 @@ runs:
         cmake -S ncnn -B build_ncnn -G Ninja \
           -D CMAKE_BUILD_TYPE=Release \
           -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+          -D CMAKE_POLICY_DEFAULT_CMP0074=NEW \
           -D NCNN_VULKAN=ON \
           -D Vulkan_LIBRARY="$VULKAN_SDK/lib/libvulkan.dylib" \
-          -D Vulkan_INCLUDE_DIR="$VULKAN_SDK/include" \
+          -D OpenMP_ROOT="$(brew --prefix libomp)" \
           -D NCNN_BUILD_BENCHMARK=OFF \
           -D NCNN_BUILD_EXAMPLES=OFF \
           -D NCNN_BUILD_TESTS=OFF \
@@ -66,3 +67,8 @@ runs:
       run: |
         ncnnRoot=$(realpath ncnn-dist)
         echo "CMAKE_PREFIX_PATH=$ncnnRoot${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
+
+        brew_prefix=$(brew --prefix libomp)
+        echo "OpenMP_ROOT=$brew_prefix" >> $GITHUB_ENV
+        echo "SKBUILD_CMAKE_DEFINE_OpenMP_ROOT=$brew_prefix" >> $GITHUB_ENV
+        echo "SKBUILD_CMAKE_DEFINE_CMAKE_POLICY_DEFAULT_CMP0074=NEW" >> $GITHUB_ENV

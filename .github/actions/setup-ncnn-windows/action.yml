@@ -19,7 +19,6 @@ runs:
         key: setup-ncnn-${{ runner.os }}-ncnn-${{ inputs.ncnn-tag }}-vulkan-${{ inputs.vulkan-version }}
 
     - name: Install Vulkan SDK
-      if: steps.cache-ncnn.outputs.cache-hit != 'true'
       uses: jakoch/install-vulkan-sdk-action@3c53c378c9bfbb2ea122a1cc164a837d4004c871 # v1.5.2
       with:
         vulkan_version: ${{ inputs.vulkan-version }}

@@ -7,7 +7,7 @@ requires = [
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "vapoursynth-ncnn"
+name = "vapoursynth-mlrt-ncnn"
 dynamic = ["version", "readme"]
 description = "NCNN/Vulkan runtime plugin for VapourSynth"
 license = "GPL-3.0-or-later"

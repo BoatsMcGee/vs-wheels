@@ -1,4 +1,4 @@
-name: NCNN
+name: MLRT-NCNN
 
 on:
   push:

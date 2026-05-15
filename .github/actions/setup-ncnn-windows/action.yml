@@ -11,12 +11,24 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Define cache key
+      id: cache-key
+      shell: pwsh
+      run: |
+        "key=${{ format(
+          'setup-ncnn-{0}-{1}-vulkan-{2}-{3}',
+          runner.os,
+          inputs.ncnn-tag,
+          inputs.vulkan-version,
+          hashFiles('.github/cmake-cache/ncnn-base.cmake', '.github/cmake-cache/ncnn-windows.cmake')
+        ) }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
     - name: Restore NCNN
       id: cache-ncnn
       uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
         path: ncnn-dist
-        key: setup-ncnn-${{ runner.os }}-ncnn-${{ inputs.ncnn-tag }}-vulkan-${{ inputs.vulkan-version }}
+        key: ${{ steps.cache-key.outputs.key }}
 
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@3c53c378c9bfbb2ea122a1cc164a837d4004c871 # v1.5.2
@@ -32,33 +44,29 @@ runs:
         path: ncnn
         submodules: recursive
 
-    # The AmusementClub/ncnn fork adds:
-    # -G Ninja for supposedly faster builds
-    # -D CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded: Static CRT (/MT)
-    # -D NCNN_ENABLE_LTO=TRUE: Link-time optimizations
+    - name: Configure NCNN
+      if: steps.cache-ncnn.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: cmake -S ncnn -B build_ncnn -G Ninja
+        -C "$env:GITHUB_WORKSPACE\.github\cmake-cache\ncnn-base.cmake"
+        -C "$env:GITHUB_WORKSPACE\.github\cmake-cache\ncnn-windows.cmake"
+
     - name: Build NCNN
       if: steps.cache-ncnn.outputs.cache-hit != 'true'
       shell: pwsh
-      run: |
-        cmake -S ncnn -B build_ncnn -G Ninja `
-          -D CMAKE_BUILD_TYPE=Release `
-          -D CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
-          -D NCNN_VULKAN=ON `
-          -D NCNN_BUILD_BENCHMARK=OFF `
-          -D NCNN_BUILD_EXAMPLES=OFF `
-          -D NCNN_BUILD_TESTS=OFF `
-          -D NCNN_BUILD_TOOLS=OFF `
-          -D NCNN_ENABLE_LTO=ON
+      run: cmake --build build_ncnn
 
-        cmake --build build_ncnn
-        cmake --install build_ncnn --prefix ncnn-dist
+    - name: Install NCNN
+      if: steps.cache-ncnn.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: cmake --install build_ncnn --prefix ncnn-dist
 
     - name: Save NCNN
       if: steps.cache-ncnn.outputs.cache-hit != 'true'
       uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
         path: ncnn-dist
-        key: setup-ncnn-${{ runner.os }}-ncnn-${{ inputs.ncnn-tag }}-vulkan-${{ inputs.vulkan-version }}
+        key: ${{ steps.cache-key.outputs.key }}
 
     - name: Configure NCNN Path
       shell: pwsh

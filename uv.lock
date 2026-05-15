@@ -19,7 +19,7 @@ members = [
     "vapoursynth-dfttest2-hiprtc",
     "vapoursynth-dfttest2-nvrtc",
     "vapoursynth-fmtconv",
-    "vapoursynth-ncnn",
+    "vapoursynth-mlrt-ncnn",
     "vs-wheels",
 ]
 
@@ -951,7 +951,7 @@ dev = [
 ]
 
 [[package]]
-name = "vapoursynth-ncnn"
+name = "vapoursynth-mlrt-ncnn"
 source = { editable = "vsmlrt/ncnn" }
 dependencies = [
     { name = "vapoursynth" },

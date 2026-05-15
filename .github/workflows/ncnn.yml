@@ -7,10 +7,14 @@ on:
     paths:
       - vsmlrt/ncnn/**
       - .github/workflows/ncnn.yml
+      - .github/actions/setup-onnx-*/**
+      - .github/actions/setup-ncnn-*/**
   pull_request:
     paths:
       - vsmlrt/ncnn/**
       - .github/workflows/ncnn.yml
+      - .github/actions/setup-onnx-*/**
+      - .github/actions/setup-ncnn-*/**
   workflow_dispatch:
     inputs:
       publish:
@@ -241,7 +245,7 @@ jobs:
         run: >-
           gh workflow run publish.yml
           -f artifact-pattern=ncnn-*
-          -f package=vapoursynth-ncnn
+          -f package=vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
           -f packages-dir=dist
           -f repository=${{ inputs.repository }}
           -f repository-url="$REPOSITORY_URL"

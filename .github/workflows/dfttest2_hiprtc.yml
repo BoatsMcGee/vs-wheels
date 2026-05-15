@@ -7,10 +7,14 @@ on:
     paths:
       - dfttest2/dfttest2_hiprtc/**
       - .github/workflows/dfttest2_hiprtc.yml
+      - .github/actions/setup-hip-linux/**
+      - .github/actions/setup-hip-windows/**
   pull_request:
     paths:
       - dfttest2/dfttest2_hiprtc/**
       - .github/workflows/dfttest2_hiprtc.yml
+      - .github/actions/setup-hip-linux/**
+      - .github/actions/setup-hip-windows/**
   workflow_dispatch:
     inputs:
       publish:

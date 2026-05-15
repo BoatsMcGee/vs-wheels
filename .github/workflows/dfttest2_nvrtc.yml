@@ -7,10 +7,14 @@ on:
     paths:
       - dfttest2/dfttest2_nvrtc/**
       - .github/workflows/dfttest2_nvrtc.yml
+      - .github/actions/setup-cuda-linux/**
+      - .github/actions/setup-cuda-windows/**
   pull_request:
     paths:
       - dfttest2/dfttest2_nvrtc/**
       - .github/workflows/dfttest2_nvrtc.yml
+      - .github/actions/setup-cuda-linux/**
+      - .github/actions/setup-cuda-windows/**
   workflow_dispatch:
     inputs:
       publish:

@@ -8,12 +8,24 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Define cache key
+      id: cache-key
+      shell: bash
+      run: |
+        echo "key=${{ format(
+          'setup-onnx-{0}-{1}-{2}-{3}',
+          runner.os,
+          runner.arch,
+          inputs.onnx-tag,
+          hashFiles('.github/cmake-cache/onnx-base.cmake', '.github/cmake-cache/onnx-unix.cmake')
+        ) }}" >> $GITHUB_OUTPUT
+
     - name: Restore ONNX
       id: cache-onnx
       uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
         path: onnx-dist
-        key: setup-onnx-${{ runner.os }}-${{ runner.arch }}-${{ inputs.onnx-tag }}
+        key: ${{ steps.cache-key.outputs.key }}
 
     - name: Checkout onnx
       if: steps.cache-onnx.outputs.cache-hit != 'true'
@@ -27,16 +39,9 @@ runs:
     - name: Configure ONNX
       shell: bash
       if: steps.cache-onnx.outputs.cache-hit != 'true'
-      run:
-        cmake -S onnx -B build_onnx -G Ninja -LA
-        -D CMAKE_BUILD_TYPE=Release
-        -D CMAKE_POSITION_INDEPENDENT_CODE=ON
-        -D ONNX_USE_LITE_PROTO=ON
-        -D ONNX_USE_PROTOBUF_SHARED_LIBS=OFF
-        -D ONNX_GEN_PB_TYPE_STUBS=OFF
-        -D ONNX_ML=0
-        -D ONNX_BUILD_CUSTOM_PROTOBUF=ON
-        # -D CMAKE_CXX_FLAGS="-include cstdint"
+      run: cmake -S onnx -B build_onnx -G Ninja -LA
+        -C "$GITHUB_WORKSPACE/.github/cmake-cache/onnx-base.cmake"
+        -C "$GITHUB_WORKSPACE/.github/cmake-cache/onnx-unix.cmake"
 
     - name: Build onnx
       shell: bash
@@ -53,7 +58,7 @@ runs:
       uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
         path: onnx-dist
-        key: setup-onnx-${{ runner.os }}-${{ runner.arch }}-${{ inputs.onnx-tag }}
+        key: ${{ steps.cache-key.outputs.key }}
 
     - name: Configure ONNX Path
       shell: bash

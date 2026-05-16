@@ -50,9 +50,10 @@ if(WIN32 AND HIP_DLLS)
 endif()
 
 install(TARGETS dfttest2_hiprtc LIBRARY DESTINATION .)
+
 if(WIN32)
-  file(WRITE "manifest.vs" "[VapourSynth Manifest V1]\nbm3dcpu\n")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/manifest.vs" "[VapourSynth Manifest V1]\ndfttest2_hiprtc\n")
 else()
-  file(WRITE "manifest.vs" "[VapourSynth Manifest V1]\nlibbm3dcpu\n")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/manifest.vs" "[VapourSynth Manifest V1]\nlibdfttest2_hiprtc\n")
 endif()
-install(FILES "manifest.vs" DESTINATION .)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/manifest.vs" DESTINATION .)

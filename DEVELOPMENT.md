@@ -32,6 +32,9 @@ git submodule update --remote bm3dcuda/bm3dcpu/vapoursynth
 
 # List tags for one submodule.
 git -C bm3dcuda/bm3dcpu/vapoursynth tag
+
+# Nuclear submodules reset
+git submodule foreach --recursive git reset --hard
 ```
 
 To pin a submodule to a tag:

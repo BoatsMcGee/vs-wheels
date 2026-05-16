@@ -82,7 +82,6 @@ on:
         type: string
         required: false
         default: "1.4.350.0"
-  merge_group:
 
 env:
   ONNX_WINDOWS_TAG: ${{ inputs.onnx-windows-tag || 'v1.19.0' }}

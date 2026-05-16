@@ -1,20 +1,20 @@
-name: BM3DCUDA
+name: DFTTEST2_HIP
 
 on:
   push:
     branches:
       - master
     paths:
-      - bm3dcuda/bm3dcuda/**
-      - .github/workflows/bm3dcuda.yml
-      - .github/actions/setup-cuda-linux/**
-      - .github/actions/setup-cuda-windows/**
+      - dfttest2/dfttest2_hip/**
+      - .github/workflows/pkg-dfttest2_hip.yml
+      - .github/actions/setup-hip-linux/**
+      - .github/actions/setup-hip-windows/**
   pull_request:
     paths:
-      - bm3dcuda/bm3dcuda/**
-      - .github/workflows/bm3dcuda.yml
-      - .github/actions/setup-cuda-linux/**
-      - .github/actions/setup-cuda-windows/**
+      - dfttest2/dfttest2_hip/**
+      - .github/workflows/pkg-dfttest2_hip.yml
+      - .github/actions/setup-hip-linux/**
+      - .github/actions/setup-hip-windows/**
   workflow_dispatch:
     inputs:
       publish:
@@ -31,32 +31,35 @@ on:
           - testpypi
           - pypi
       version:
-        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DCUDA)
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIP)
         type: string
         required: false
-      cuda-linux:
-        description: CUDA version for Linux
+      hip-linux:
+        description: HIP version for Linux (7.0, 7.2.2)
         type: string
         required: false
-        default: "12.8"
-      cuda-windows:
-        description: CUDA version for Windows
-        type: string
-        required: false
-        default: "13.0.1"
+        default: "7.0"
+      hip-windows:
+        description: HIP version for Windows (e.g., 25.Q3 -> 6.4.2 | 26.Q1 -> 7.1.1)
+        type: choice
+        required: true
+        options:
+          - 26.Q1-Win11
+          - 25.Q3-WinSvr2022
       windows-runner:
         description: Windows runner to use
         type: choice
         required: true
-        default: windows-2025
+        default: windows-2025-vs2026
         options:
           - windows-2025-vs2026
           - windows-2025
           - windows-2022
 
 env:
-  CUDA_LINUX: ${{ inputs.cuda-linux || '12.8' }}
-  CUDA_WINDOWS: ${{ inputs.cuda-windows || '13.0.1' }}
+  HIP_LINUX: ${{ inputs.hip-linux || '7.0' }}
+  HIP_WINDOWS: ${{ inputs.hip-windows || '26.Q1-Win11' }}
+  PACKAGE_NAME: dfttest2_hip
 
 jobs:
   build-wheels:
@@ -67,12 +70,7 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
             container: quay.io/pypa/manylinux_2_28_x86_64
-            cuda_repo: rhel8/x86_64
-          - os: ubuntu-24.04-arm
-            arch: sbsa
-            container: quay.io/pypa/manylinux_2_28_aarch64
-            cuda_repo: rhel8/sbsa
-          - os: ${{ inputs.windows-runner || 'windows-2025' }}
+          - os: ${{ inputs.windows-runner || 'windows-2025-vs2026' }}
             arch: amd64
 
     name: Build wheels on ${{ matrix.os }}
@@ -88,35 +86,33 @@ jobs:
         run: |
           # Workaround for Linux containers
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule update --init --recursive bm3dcuda/bm3dcuda/VapourSynth-BM3DCUDA bm3dcuda/bm3dcuda/vapoursynth
+          git submodule update --init --recursive dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2 dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - name: Setup CUDA (Linux)
+      - name: Setup HIP (Linux)
         if: runner.os == 'Linux'
-        uses: ./.github/actions/setup-cuda-linux
+        uses: ./.github/actions/setup-hip-linux
         with:
-          cuda-version: ${{ env.CUDA_LINUX }}
-          cuda-repo: ${{ matrix.cuda_repo }}
-          cuda-components: "cuda-nvcc, cuda-cudart-devel, cuda-nvrtc-devel, cuda-driver-devel"
+          hip-version: ${{ env.HIP_LINUX }}
+          hip-components: hip-devel, hip-runtime-amd, hipfft-devel, rocm-device-libs, libxml2, libstdc++-devel
 
       - name: Setup MSVC
         if: runner.os == 'Windows'
         uses: ./.github/actions/setup-msvc
 
-      - name: Setup CUDA (Windows)
+      - name: Setup HIP (Windows)
         if: runner.os == 'Windows'
-        uses: ./.github/actions/setup-cuda-windows
+        uses: ./.github/actions/setup-hip-windows
         with:
-          cuda-version: ${{ env.CUDA_WINDOWS }}
-          cuda-components: "nvcc, cudart, nvrtc_dev, crt, nvptxcompiler, nvvm"
+          hip-version: ${{ env.HIP_WINDOWS }}
           cache-key: ${{ matrix.os }}
 
       - name: Build wheels
-        run: uv build --wheel --package vapoursynth-bm3dcuda
+        run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DCUDA: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIP: ${{ inputs.version }}
 
       - name: Repair wheel (Linux)
         if: runner.os == 'Linux'
@@ -125,10 +121,9 @@ jobs:
           rm dist/*.whl
           mv repaired_wheels/*.whl dist/
 
-      - name: Upload wheels
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: bm3dcuda-wheels-${{ matrix.os }}-${{ matrix.arch }}
+          name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/*.whl
 
   build-sdist:
@@ -140,20 +135,40 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive bm3dcuda/bm3dcuda/VapourSynth-BM3DCUDA bm3dcuda/bm3dcuda/vapoursynth
+        run: git submodule update --init --recursive dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2 dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Build sdist
-        run: uv build --sdist --package vapoursynth-bm3dcuda
+        run: uv build --sdist --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DCUDA: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIP: ${{ inputs.version }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: bm3dcuda-sdist
+          name: ${{ env.PACKAGE_NAME }}-sdist
           path: dist/*.tar.gz
+
+      - name: Generate metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: |
+          VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
+          cat << EOF > metadata.json
+          {
+            "package": "${{ env.PACKAGE_NAME }}",
+            "version": "$VERSION",
+            "hip_linux": "${{ env.HIP_LINUX }}",
+            "hip_windows": "${{ env.HIP_WINDOWS }}"
+          }
+          EOF
+
+      - name: Upload metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-metadata
+          path: metadata.json
 
   trigger-publish:
     name: Trigger ${{ inputs.repository }} publish
@@ -171,9 +186,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
-          gh workflow run publish.yml
-          -f artifact-pattern=bm3dcuda-*
-          -f package=vapoursynth-bm3dcuda
+          gh workflow run cd-publish.yml
+          -f artifact-pattern=${{ env.PACKAGE_NAME }}-*
+          -f package=vapoursynth-${{ env.PACKAGE_NAME }}
           -f packages-dir=dist
           -f repository=${{ inputs.repository }}
           -f repository-url="$REPOSITORY_URL"

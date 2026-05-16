@@ -6,13 +6,13 @@ on:
       - master
     paths:
       - bm3dcuda/bm3dhip/**
-      - .github/workflows/bm3dhip.yml
+      - .github/workflows/pkg-bm3dhip.yml
       - .github/actions/setup-hip-linux/**
       - .github/actions/setup-hip-windows/**
   pull_request:
     paths:
       - bm3dcuda/bm3dhip/**
-      - .github/workflows/bm3dhip.yml
+      - .github/workflows/pkg-bm3dhip.yml
       - .github/actions/setup-hip-linux/**
       - .github/actions/setup-hip-windows/**
   workflow_dispatch:
@@ -150,6 +150,26 @@ jobs:
           name: bm3dhip-sdist
           path: dist/*.tar.gz
 
+      - name: Generate metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: |
+          VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
+          cat << EOF > metadata.json
+          {
+            "package": "${{ env.PACKAGE_NAME }}",
+            "version": "$VERSION",
+            "hip_linux": "${{ env.HIP_LINUX }}",
+            "hip_windows": "${{ env.HIP_WINDOWS }}"
+          }
+          EOF
+
+      - name: Upload metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-metadata
+          path: metadata.json
+
   trigger-publish:
     name: Trigger ${{ inputs.repository }} publish
     if: github.event_name == 'workflow_dispatch' && inputs.publish
@@ -166,7 +186,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
-          gh workflow run publish.yml
+          gh workflow run cd-publish.yml
           -f artifact-pattern=bm3dhip-*
           -f package=vapoursynth-bm3dhip
           -f packages-dir=dist

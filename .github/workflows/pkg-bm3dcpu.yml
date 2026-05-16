@@ -1,16 +1,16 @@
-name: DFTTEST2_CPU
+name: BM3DCPU
 
 on:
   push:
     branches:
       - master
     paths:
-      - dfttest2/dfttest2_cpu/**
-      - .github/workflows/dfttest2_cpu.yml
+      - bm3dcuda/bm3dcpu/**
+      - .github/workflows/pkg-bm3dcpu.yml
   pull_request:
     paths:
-      - dfttest2/dfttest2_cpu/**
-      - .github/workflows/dfttest2_cpu.yml
+      - bm3dcuda/bm3dcpu/**
+      - .github/workflows/pkg-bm3dcpu.yml
   workflow_dispatch:
     inputs:
       publish:
@@ -27,25 +27,18 @@ on:
           - testpypi
           - pypi
       version:
-        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CPU)
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DCPU)
         type: string
         required: false
 
 jobs:
   build-wheels:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            name: Linux x64
-          - os: windows-2025-vs2026
-            name: Windows x64
-          - os: macos-26-intel
-            name: macOS x64
-
-    name: Build wheels on ${{ matrix.name }}
+    name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-2025-vs2026]
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -53,7 +46,7 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive dfttest2/dfttest2_cpu/vs-dfttest2 dfttest2/dfttest2_cpu/vapoursynth
+        run: git submodule update --init --recursive bm3dcuda/bm3dcpu/VapourSynth-BM3DCUDA bm3dcuda/bm3dcpu/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -65,13 +58,13 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         with:
-          package-dir: dfttest2/dfttest2_cpu
+          package-dir: bm3dcuda/bm3dcpu
         env:
-          CIBW_ENVIRONMENT: SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CPU="${{ inputs.version }}"
+          CIBW_ENVIRONMENT: SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DCPU="${{ inputs.version }}"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: dfttest2_cpu-wheels-${{ matrix.name }}
+          name: bm3dcpu-wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
   build-sdist:
@@ -83,20 +76,38 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive dfttest2/dfttest2_cpu/vs-dfttest2 dfttest2/dfttest2_cpu/vapoursynth
+        run: git submodule update --init --recursive bm3dcuda/bm3dcpu/VapourSynth-BM3DCUDA bm3dcuda/bm3dcpu/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Build sdist
-        run: uv build --sdist --package vapoursynth-dfttest2_cpu
+        run: uv build --sdist --package vapoursynth-bm3dcpu
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CPU: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DCPU: ${{ inputs.version }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: dfttest2_cpu-sdist
+          name: bm3dcpu-sdist
           path: dist/*.tar.gz
+
+      - name: Generate metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: |
+          VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
+          cat << EOF > metadata.json
+          {
+            "package": "${{ env.PACKAGE_NAME }}",
+            "version": "$VERSION"
+          }
+          EOF
+
+      - name: Upload metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-metadata
+          path: metadata.json
 
   trigger-publish:
     name: Trigger ${{ inputs.repository }} publish
@@ -114,9 +125,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
-          gh workflow run publish.yml
-          -f artifact-pattern=dfttest2_cpu-*
-          -f package=vapoursynth-dfttest2_cpu
+          gh workflow run cd-publish.yml
+          -f artifact-pattern=bm3dcpu-*
+          -f package=vapoursynth-bm3dcpu
           -f packages-dir=dist
           -f repository=${{ inputs.repository }}
           -f repository-url="$REPOSITORY_URL"

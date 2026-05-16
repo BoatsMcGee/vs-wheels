@@ -6,11 +6,11 @@ on:
       - master
     paths:
       - dfttest2/dfttest2/**
-      - .github/workflows/dfttest2.yml
+      - .github/workflows/pkg-dfttest2.yml
   pull_request:
     paths:
       - dfttest2/dfttest2/**
-      - .github/workflows/dfttest2.yml
+      - .github/workflows/pkg-dfttest2.yml
   workflow_dispatch:
     inputs:
       publish:
@@ -72,7 +72,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
-          gh workflow run publish.yml
+          gh workflow run cd-publish.yml
           -f artifact-pattern=dfttest2-py
           -f package=dfttest2
           -f packages-dir=dist

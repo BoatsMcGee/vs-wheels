@@ -1,0 +1,132 @@
+{
+  "vapoursynth-bm3dcpu": {
+    "2.16.5": {
+      "release_date": "2026-05-16",
+      "notes": "Matches upstream R2.16. Requires VapourSynth R75."
+    }
+  },
+  "vapoursynth-bm3dcuda": {
+    "2.16": {
+      "release_date": "2026-05-16",
+      "cuda_windows": "13.0.1",
+      "cuda_linux": "12.8"
+    },
+    "2.17.dev1": {
+      "release_date": "2026-05-16",
+      "cuda_windows": "13.2.1",
+      "cuda_linux": "13.2"
+    }
+  },
+  "vapoursynth-bm3dhip": {
+    "2.16": {
+      "release_date": "2026-05-16",
+      "hip_windows": "6.4.2",
+      "hip_linux": "7.0"
+    },
+    "2.17.dev1": {
+      "release_date": "2026-05-16",
+      "hip_windows": "7.1.1",
+      "hip_linux": "7.2.2"
+    }
+  },
+  "dfttest2": {
+    "10": {
+      "release_date": "2026-05-16",
+      "notes": "Matches upstream release v10"
+    }
+  },
+  "vapoursynth-dfttest2-gcc": {
+    "10": {
+      "release_date": "2026-05-16",
+      "notes": "Matches upstream release v10"
+    }
+  },
+  "vapoursynth-dfttest2-cpu": {
+    "10": {
+      "release_date": "2026-05-16",
+      "notes": "Matches upstream release v10"
+    }
+  },
+  "vapoursynth-dfttest2-nvrtc": {
+    "10": {
+      "release_date": "2026-05-16",
+      "cuda_windows": "13.0.1",
+      "cuda_linux": "13.0"
+    },
+    "11.dev1": {
+      "release_date": "2026-05-16",
+      "cuda_windows": "13.2.1",
+      "cuda_linux": "13.2"
+    }
+  },
+  "vapoursynth-dfttest2-cuda": {
+    "10": {
+      "release_date": "2026-05-16",
+      "cuda_windows": "13.0.1",
+      "cuda_linux": "13.0"
+    },
+    "10.2": {
+      "release_date": "2026-05-16",
+      "notes": "Available on PyPI"
+    },
+    "11.dev1": {
+      "release_date": "2026-05-16",
+      "cuda_windows": "13.2.1",
+      "cuda_linux": "13.2"
+    },
+    "11.dev2": {
+      "release_date": "2026-05-16",
+      "notes": "Available on vs-wheels index"
+    }
+  },
+  "vapoursynth-dfttest2-hip": {
+    "10": {
+      "release_date": "2026-05-16",
+      "hip_windows": "7.1.1",
+      "hip_linux": "7.0"
+    },
+    "11.dev1": {
+      "release_date": "2026-05-16",
+      "hip_windows": "7.1.1",
+      "hip_linux": "7.2.2"
+    }
+  },
+  "vapoursynth-dfttest2-hiprtc": {
+    "10": {
+      "release_date": "2026-05-16",
+      "hip_windows": "7.1.1",
+      "hip_linux": "7.0"
+    },
+    "11.dev1": {
+      "release_date": "2026-05-16",
+      "hip_windows": "7.1.1",
+      "hip_linux": "7.2.2"
+    }
+  },
+  "vapoursynth-ffms2": {
+    "5.2.1": {
+      "release_date": "2026-05-16",
+      "notes": "Compiled with Fast Forward Moving Picture Experts Group 8.1 from the vcpkg 2026.04.27 Release."
+    }
+  },
+  "vapoursynth-fmtconv": {
+    "31": {
+      "release_date": "2026-05-16",
+      "notes": "Matches upstream release R31."
+    }
+  },
+  "vapoursynth-mlrt-ncnn": {
+    "15.16": {
+      "release_date": "2026-05-16",
+      "onnx_windows": "v1.19.0",
+      "onnx_linux": "v1.19.0",
+      "onnx_macos": "v1.21.0",
+      "ncnn_windows": "86efe80b50408bfeca79761edcb3fa4b4e513331 (20250503 + 1)",
+      "ncnn_linux": "20250503",
+      "ncnn_macos": "20260113",
+      "vulkan_windows": "1.4.321.1",
+      "vulkan_linux": "1.4.321.1",
+      "vulkan_macos": "1.4.350.0"
+    }
+  }
+}

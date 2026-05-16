@@ -1,16 +1,16 @@
-name: DFTTEST2_GCC
+name: DFTTEST2_CPU
 
 on:
   push:
     branches:
       - master
     paths:
-      - dfttest2/dfttest2_gcc/**
-      - .github/workflows/dfttest2_gcc.yml
+      - dfttest2/dfttest2_cpu/**
+      - .github/workflows/pkg-dfttest2_cpu.yml
   pull_request:
     paths:
-      - dfttest2/dfttest2_gcc/**
-      - .github/workflows/dfttest2_gcc.yml
+      - dfttest2/dfttest2_cpu/**
+      - .github/workflows/pkg-dfttest2_cpu.yml
   workflow_dispatch:
     inputs:
       publish:
@@ -27,7 +27,7 @@ on:
           - testpypi
           - pypi
       version:
-        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_GCC)
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CPU)
         type: string
         required: false
 
@@ -39,12 +39,8 @@ jobs:
         include:
           - os: ubuntu-24.04
             name: Linux x64
-          - os: ubuntu-24.04-arm
-            name: Linux ARM
           - os: windows-2025-vs2026
             name: Windows x64
-          - os: macos-26
-            name: macOS ARM64
           - os: macos-26-intel
             name: macOS x64
 
@@ -57,7 +53,7 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive dfttest2/dfttest2_gcc/vs-dfttest2 dfttest2/dfttest2_gcc/vapoursynth
+        run: git submodule update --init --recursive dfttest2/dfttest2_cpu/vs-dfttest2 dfttest2/dfttest2_cpu/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -69,13 +65,13 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         with:
-          package-dir: dfttest2/dfttest2_gcc
+          package-dir: dfttest2/dfttest2_cpu
         env:
-          CIBW_ENVIRONMENT: SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_GCC="${{ inputs.version }}"
+          CIBW_ENVIRONMENT: SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CPU="${{ inputs.version }}"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: dfttest2_gcc-wheels-${{ matrix.name }}
+          name: dfttest2_cpu-wheels-${{ matrix.name }}
           path: ./wheelhouse/*.whl
 
   build-sdist:
@@ -87,20 +83,38 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive dfttest2/dfttest2_gcc/vs-dfttest2 dfttest2/dfttest2_gcc/vapoursynth
+        run: git submodule update --init --recursive dfttest2/dfttest2_cpu/vs-dfttest2 dfttest2/dfttest2_cpu/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Build sdist
-        run: uv build --sdist --package vapoursynth-dfttest2_gcc
+        run: uv build --sdist --package vapoursynth-dfttest2_cpu
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_GCC: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CPU: ${{ inputs.version }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: dfttest2_gcc-sdist
+          name: dfttest2_cpu-sdist
           path: dist/*.tar.gz
+
+      - name: Generate metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: |
+          VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
+          cat << EOF > metadata.json
+          {
+            "package": "${{ env.PACKAGE_NAME }}",
+            "version": "$VERSION"
+          }
+          EOF
+
+      - name: Upload metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-metadata
+          path: metadata.json
 
   trigger-publish:
     name: Trigger ${{ inputs.repository }} publish
@@ -118,9 +132,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
-          gh workflow run publish.yml
-          -f artifact-pattern=dfttest2_gcc-*
-          -f package=vapoursynth-dfttest2_gcc
+          gh workflow run cd-publish.yml
+          -f artifact-pattern=dfttest2_cpu-*
+          -f package=vapoursynth-dfttest2_cpu
           -f packages-dir=dist
           -f repository=${{ inputs.repository }}
           -f repository-url="$REPOSITORY_URL"

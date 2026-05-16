@@ -12,7 +12,7 @@ on:
       - "pyproject.toml"
       - "package-lock.json"
       - "package.json"
-      - ".github/workflows/lock-integrity.yml"
+      - ".github/workflows/ci-lock-integrity.yml"
   workflow_dispatch:
 
 concurrency:

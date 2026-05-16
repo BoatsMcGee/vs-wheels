@@ -6,11 +6,11 @@ on:
       - master
     paths:
       - fmtc/**
-      - .github/workflows/fmtc.yml
+      - .github/workflows/pkg-fmtc.yml
   pull_request:
     paths:
       - fmtc/**
-      - .github/workflows/fmtc.yml
+      - .github/workflows/pkg-fmtc.yml
   workflow_dispatch:
     inputs:
       publish:
@@ -92,13 +92,32 @@ jobs:
           name: fmtconv-sdist
           path: dist/*.tar.gz
 
+      - name: Generate metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: |
+          VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
+          cat << EOF > metadata.json
+          {
+            "package": "fmtc",
+            "version": "$VERSION",
+            "notes": "Available for Windows, Linux, and macOS"
+          }
+          EOF
+
+      - name: Upload metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: fmtc-metadata
+          path: metadata.json
+
   upload-release:
     name: Upload to GitHub Release
     if: github.event_name == 'workflow_dispatch' && inputs.publish
     needs: [build-wheels, build-sdist]
     permissions:
       contents: write
-    uses: ./.github/workflows/upload-release.yml
+    uses: ./.github/workflows/cd-upload-release.yml
     with:
       wheel-pattern: fmtc-wheels-*
       sdist-name: fmtconv-sdist
@@ -108,7 +127,7 @@ jobs:
     name: Update package index
     if: github.event_name == 'workflow_dispatch' && inputs.publish
     needs: [upload-release]
-    uses: ./.github/workflows/update-index.yml
+    uses: ./.github/workflows/cd-update-index.yml
     permissions:
       contents: read
       pages: write

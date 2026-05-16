@@ -1,18 +1,18 @@
-name: DFTTEST2_HIP
+name: DFTTEST2_HIPRTC
 
 on:
   push:
     branches:
       - master
     paths:
-      - dfttest2/dfttest2_hip/**
-      - .github/workflows/dfttest2_hip.yml
+      - dfttest2/dfttest2_hiprtc/**
+      - .github/workflows/pkg-dfttest2_hiprtc.yml
       - .github/actions/setup-hip-linux/**
       - .github/actions/setup-hip-windows/**
   pull_request:
     paths:
-      - dfttest2/dfttest2_hip/**
-      - .github/workflows/dfttest2_hip.yml
+      - dfttest2/dfttest2_hiprtc/**
+      - .github/workflows/pkg-dfttest2_hiprtc.yml
       - .github/actions/setup-hip-linux/**
       - .github/actions/setup-hip-windows/**
   workflow_dispatch:
@@ -31,7 +31,7 @@ on:
           - testpypi
           - pypi
       version:
-        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIP)
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIPRTC)
         type: string
         required: false
       hip-linux:
@@ -59,7 +59,7 @@ on:
 env:
   HIP_LINUX: ${{ inputs.hip-linux || '7.0' }}
   HIP_WINDOWS: ${{ inputs.hip-windows || '26.Q1-Win11' }}
-  PACKAGE_NAME: dfttest2_hip
+  PACKAGE_NAME: dfttest2_hiprtc
 
 jobs:
   build-wheels:
@@ -112,7 +112,7 @@ jobs:
       - name: Build wheels
         run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIP: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIPRTC: ${{ inputs.version }}
 
       - name: Repair wheel (Linux)
         if: runner.os == 'Linux'
@@ -143,12 +143,32 @@ jobs:
       - name: Build sdist
         run: uv build --sdist --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIP: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_HIPRTC: ${{ inputs.version }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.PACKAGE_NAME }}-sdist
           path: dist/*.tar.gz
+
+      - name: Generate metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: |
+          VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
+          cat << EOF > metadata.json
+          {
+            "package": "${{ env.PACKAGE_NAME }}",
+            "version": "$VERSION",
+            "hip_linux": "${{ env.HIP_LINUX }}",
+            "hip_windows": "${{ env.HIP_WINDOWS }}"
+          }
+          EOF
+
+      - name: Upload metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-metadata
+          path: metadata.json
 
   trigger-publish:
     name: Trigger ${{ inputs.repository }} publish
@@ -166,7 +186,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
-          gh workflow run publish.yml
+          gh workflow run cd-publish.yml
           -f artifact-pattern=${{ env.PACKAGE_NAME }}-*
           -f package=vapoursynth-${{ env.PACKAGE_NAME }}
           -f packages-dir=dist

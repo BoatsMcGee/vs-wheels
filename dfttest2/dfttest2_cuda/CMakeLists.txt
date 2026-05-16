@@ -44,4 +44,10 @@ if(WIN32 AND CUFFT_DLL)
 endif()
 
 install(TARGETS dfttest2_cuda LIBRARY DESTINATION .)
+
+if(WIN32)
+  file(WRITE "manifest.vs" "[VapourSynth Manifest V1]\nbm3dcpu\n")
+else()
+  file(WRITE "manifest.vs" "[VapourSynth Manifest V1]\nlibbm3dcpu\n")
+endif()
 install(FILES "manifest.vs" DESTINATION .)

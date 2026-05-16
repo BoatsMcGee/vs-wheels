@@ -36,8 +36,12 @@ if(BM3D_MULTI_TARGET)
     install(TARGETS ${TARGET_NAME} DESTINATION .)
   endforeach()
 
+  if(WIN32)
+    file(WRITE "manifest.vs" "[VapourSynth Manifest V1]\nbm3dcpu\n")
+  else()
+    file(WRITE "manifest.vs" "[VapourSynth Manifest V1]\nlibbm3dcpu\n")
+  endif()
   install(FILES "manifest.vs" DESTINATION .)
-
 else()
   add_library(bm3dcpu SHARED ${SOURCE_FILE})
   target_include_directories(bm3dcpu PRIVATE ${VAPOURSYNTH_INCLUDE_DIRECTORY})

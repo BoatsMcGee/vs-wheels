@@ -36,6 +36,10 @@
     {
       "automerge": true,
       "matchUpdateTypes": ["pin", "digest", "pinDigest"]
+    },
+    {
+      "matchManagers": ["git-submodules"],
+      "automerge": false
     }
   ]
 }

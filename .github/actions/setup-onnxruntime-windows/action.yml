@@ -78,7 +78,7 @@ runs:
           nvcc,
           nvptxcompiler,
           nvrtc,
-          nvrtc_dev
+          nvrtc_dev,
           nvtx,
           nvvm,
           thrust

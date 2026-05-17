@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -70,9 +71,9 @@ def fetch_releases(repo: str, token: str | None = None) -> list[dict[str, Any]]:
     return releases
 
 
-def collect_assets(releases: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
+def collect_assets(releases: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """Return a {filename: {url, hash}} mapping for all dist assets."""
-    assets = dict[str, dict[str, str]]()
+    assets = dict[str, dict[str, Any]]()
 
     for release in releases:
         for asset in release.get("assets", []):
@@ -80,12 +81,17 @@ def collect_assets(releases: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
             if name.endswith((".whl", ".tar.gz")):
                 url = asset["browser_download_url"]
                 digest = asset.get("digest", "")
+                updated_at = asset["updated_at"]
+
+                assets[name] = {"url": url}
 
                 if digest.startswith("sha256:"):
-                    file_hash = digest.split(":", 1)[1]
-                    assets[name] = {"url": url, "hash": file_hash}
+                    assets[name]["hash"] = digest.split(":", 1)[1]
                 else:
                     logger.warning(f"No SHA256 digest found for {name} in API response. Skipping.")
+
+                ts = datetime.strptime(updated_at, "%Y-%m-%dT%H:%M:%SZ")
+                assets[name]["upload_timestamp"] = int(ts.timestamp())
 
     return assets
 
@@ -97,7 +103,12 @@ def run_dumb_pypi(assets: dict[str, dict[str, str]], title: str) -> None:
         # Write one JSON object per line (dumb-pypi --package-list-json format)
         with package_list.open("w", encoding="utf-8") as f:
             for filename in sorted(assets):
-                entry = {"filename": filename, "hash": f"sha256={assets[filename]['hash']}"}
+                entry = {
+                    "filename": filename,
+                    "hash": f"sha256={assets[filename]['hash']}",
+                    "upload_timestamp": assets[filename]["upload_timestamp"],
+                    "uploaded_by": "JET",
+                }
                 json.dump(entry, f)
                 f.write("\n")
 
@@ -110,7 +121,6 @@ def run_dumb_pypi(assets: dict[str, dict[str, str]], title: str) -> None:
             str(OUTPUT_DIR),
             "--title",
             title,
-            "--no-generate-timestamp",
             "--logo",
             "https://avatars.githubusercontent.com/u/137835541",
             "--logo-width",

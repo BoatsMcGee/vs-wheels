@@ -64,18 +64,24 @@ runs:
       with:
         cuda-version: ${{ inputs.cuda-version }}
         cuda-components: >-
-          nvcc,
-          cudart,
-          cublas_dev,
-          cufft_dev,
-          curand_dev,
-          cusparse_dev,
-          cupti,
-          thrust,
-          nvtx,
           crt,
+          cublas,
+          cublas_dev,
+          cudart,
+          cufft,
+          cufft_dev,
+          cupti,
+          curand,
+          curand_dev,
+          cusparse,
+          cusparse_dev,
+          nvcc,
           nvptxcompiler,
+          nvrtc,
+          nvrtc_dev
+          nvtx,
           nvvm
+          thrust,
         cache-key: ${{ matrix.os }}
 
     - name: Parse CUDA Major Version
@@ -113,6 +119,8 @@ runs:
 
     - name: Pre-restore DirectML NuGet packages
       shell: pwsh
+      env:
+        FORCE_COLOR: 1
       run: |
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 

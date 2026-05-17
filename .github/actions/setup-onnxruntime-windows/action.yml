@@ -80,8 +80,8 @@ runs:
           nvrtc,
           nvrtc_dev
           nvtx,
-          nvvm
-          thrust,
+          nvvm,
+          thrust
         cache-key: ${{ matrix.os }}
 
     - name: Parse CUDA Major Version

@@ -55,7 +55,6 @@ runs:
         Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait
 
     - name: Cache CUDA (Windows)
-      id: cache-cuda
       uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
         path: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA

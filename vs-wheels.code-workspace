@@ -1,6 +1,10 @@
 {
   "folders": [
     {
+      "name": "vs-wheels (Root)",
+      "path": ".",
+    },
+    {
       "name": "BM3D CPU",
       "path": "bm3dcuda/bm3dcpu",
     },
@@ -51,10 +55,6 @@
     {
       "name": "VSMLRT ORT",
       "path": "vsmlrt/ort",
-    },
-    {
-      "name": "vs-wheels (Root)",
-      "path": ".",
     },
   ],
   "settings": {

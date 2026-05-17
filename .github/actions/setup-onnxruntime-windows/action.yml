@@ -133,7 +133,7 @@ runs:
             Start-Sleep -Seconds 15
             dotnet nuget locals all --clear
           } else {
-            throw "NuGet restore failed after $maxRetries attempts." -ForegroundColor Red
+            throw "NuGet restore failed after $maxRetries attempts."
           }
         }
 

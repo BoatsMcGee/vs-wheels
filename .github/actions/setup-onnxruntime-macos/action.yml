@@ -16,7 +16,7 @@ runs:
             '.github/cmake-cache/onnxruntime-base.cmake',
             '.github/cmake-cache/onnxruntime-macos.cmake'
           ) }}"
-        echo "key=setup-onnxruntime-${RUNNER_OS}-${ARCH}-${{ inputs.onnxruntime-tag }}-${HASH}" >> $GITHUB_OUTPUT
+        echo "key=setup-onnxruntime-${RUNNER_OS}-${{ inputs.onnxruntime-tag }}-${HASH}" >> $GITHUB_OUTPUT
 
     - name: Restore ONNX Runtime
       id: cache-onnx

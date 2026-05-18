@@ -1,0 +1,6 @@
+[build-system]
+requires = ["wheel-stub==0.5.0"]
+build-backend = "wheel_stub.buildapi"
+
+[tool.wheel_stub]
+index_url = "https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple"

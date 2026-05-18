@@ -88,9 +88,7 @@ jobs:
         run: |
           # Workaround for Linux containers
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule update --init --recursive \
-            dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2 \
-            dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
+          git submodule update --init --recursive dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2 dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -145,10 +143,7 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: >-
-          git submodule update --init --recursive
-          dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2
-          dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
+        run: git submodule update --init --recursive dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2 dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -183,44 +178,35 @@ jobs:
           name: ${{ env.PACKAGE_NAME }}-metadata
           path: metadata.json
 
-  build-wheel-stub:
-    name: Build wheel stub
-    runs-on: ubuntu-latest
+  trigger-publish:
+    name: Trigger ${{ inputs.repository }} publish
     if: github.event_name == 'workflow_dispatch' && inputs.publish
     needs: [build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          fetch-depth: 0
-
-      - name: Initialize submodules
+      - name: Trigger publish workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
-          git submodule update --init --recursive
-          dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2
-          dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-
-      - name: Download wheels
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-        with:
-          pattern: ${{ env.PACKAGE_NAME }}-wheels-*
-          path: dist
-          merge-multiple: true
-
-      - name: Build wheel stub
-        run: uv build wheel-stub/ --sdist -C source_wheel="$(realpath $(ls dist/*.whl | head -n1))"
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: ${{ env.PACKAGE_NAME }}-stub
-          path: wheel-stub/dist/*.tar.gz
+          gh workflow run cd-publish.yml
+          -f artifact-pattern=${{ env.PACKAGE_NAME }}-sdist
+          -f package=vapoursynth-${{ env.PACKAGE_NAME }}
+          -f packages-dir=dist
+          -f repository=${{ inputs.repository }}
+          -f repository-url="$REPOSITORY_URL"
+          -f run-id=${{ github.run_id }}
+          --ref ${{ github.ref_name }}
 
   upload-release:
     name: Upload to GitHub Release
     if: github.event_name == 'workflow_dispatch' && inputs.publish
-    needs: [build-wheels, build-sdist, build-wheel-stub]
+    needs: [build-wheels, build-sdist]
     permissions:
       contents: write
     uses: ./.github/workflows/cd-upload-release.yml
@@ -238,28 +224,3 @@ jobs:
       contents: read
       pages: write
       id-token: write
-
-  trigger-publish:
-    name: Trigger ${{ inputs.repository }} publish
-    if: github.event_name == 'workflow_dispatch' && inputs.publish
-    needs: update-index
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-
-    steps:
-      - name: Trigger publish workflow
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
-        run: >-
-          gh workflow run cd-publish.yml
-          -f artifact-pattern=${{ env.PACKAGE_NAME }}-stub
-          -f package=vapoursynth-${{ env.PACKAGE_NAME }}
-          -f packages-dir=wheel-stub/dist
-          -f repository=${{ inputs.repository }}
-          -f repository-url="$REPOSITORY_URL"
-          -f run-id=${{ github.run_id }}
-          --ref ${{ github.ref_name }}

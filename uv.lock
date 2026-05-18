@@ -1080,7 +1080,6 @@ requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
 
 [[package]]
 name = "vs-wheels"
-version = "0.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "vapoursynth" },

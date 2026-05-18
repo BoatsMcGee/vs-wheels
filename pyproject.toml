@@ -1,12 +1,12 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "vs-wheels"
-version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = ["vapoursynth>=75"]
+dynamic = ["version"]
 
 [project.urls]
 "Repository" = "https://github.com/Jaded-Encoding-Thaumaturgy/vs-wheels"
@@ -21,6 +21,19 @@ dev = [
     "ruff>=0.15.12",
     "toml-rs>=0.3.13",
 ]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+scm.git.describe_command = [
+    "python",
+    "-c",
+    "import subprocess as sp; count=sp.check_output(['git','rev-list','--count','HEAD'], text=True).strip(); sha=sp.check_output(['git','rev-parse','--short','HEAD'], text=True).strip(); print(f'{count}+{sha}')",
+]
+tag_regex = '^(?P<version>\d+\+[0-9a-f]+)$'
+version_scheme = "only-version"
+local_scheme = "no-local-version"
 
 [tool.hatch.build.targets.wheel]
 bypass-selection = true

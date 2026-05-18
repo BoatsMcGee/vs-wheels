@@ -85,6 +85,7 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
+        shell: bash
         run: |
           # Workaround for Linux containers
           git config --global --add safe.directory "$GITHUB_WORKSPACE"

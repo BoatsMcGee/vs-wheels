@@ -9,6 +9,7 @@ on:
       - .github/workflows/pkg-ort.yml
       - .github/actions/setup-onnx-*/**
       - .github/actions/setup-onnxruntime-*/**
+      - .github/cmake-cache/onnx-*/**
       - .github/cmake-cache/onnxruntime-*/**
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - .github/workflows/pkg-ort.yml
       - .github/actions/setup-onnx-*/**
       - .github/actions/setup-onnxruntime-*/**
+      - .github/cmake-cache/onnx-*/**
       - .github/cmake-cache/onnxruntime-*/**
   workflow_dispatch:
     inputs:

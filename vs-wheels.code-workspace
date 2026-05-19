@@ -90,6 +90,11 @@
       "**/.github/workflows/*.yml": "github-actions-workflow",
       "**/.github/actions/**/action.yml": "github-actions-workflow",
     },
+    "cmake.automaticReconfigure": false,
+    "cmake.autoSelectActiveFolder": false,
+    "cmake.buildBeforeRun": false,
+    "cmake.configureOnEdit": false,
+    "cmake.configureOnOpen": false,
   },
   "extensions": {
     "recommendations": [

@@ -114,6 +114,8 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
 
       - name: Update pyproject for CUDA build
         run: uv run --script vsmlrt/ort/scripts/cuda_pyproject.py vsmlrt/ort/pyproject.toml
@@ -204,6 +206,8 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
 
       - name: Update pyproject for CUDA build
         run: uv run --script vsmlrt/ort/scripts/cuda_pyproject.py vsmlrt/ort/pyproject.toml

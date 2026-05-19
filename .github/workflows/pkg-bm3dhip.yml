@@ -89,6 +89,8 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
 
       - name: Setup HIP (Linux)
         if: runner.os == 'Linux'
@@ -139,6 +141,8 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
 
       - name: Build sdist
         run: uv build --sdist --package vapoursynth-bm3dhip

@@ -37,7 +37,7 @@
       "path": "dfttest2/dfttest2_cuda",
     },
     {
-      "name": "DFTTEST2 NCRTC",
+      "name": "DFTTEST2 NVRTC",
       "path": "dfttest2/dfttest2_nvrtc",
     },
     {

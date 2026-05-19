@@ -209,3 +209,10 @@ runs:
           throw "DirectML package not found at $dmlPath"
         }
         "dml-path=$dmlPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+    - name: Upload ONNX Runtime
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: ${{ steps.cache-key.outputs.key }}
+        path: onnxruntime-dist
+        retention-days: 1

@@ -64,3 +64,10 @@ runs:
       run: |
         $onnxRoot = (Resolve-Path "onnx-dist").Path
         "CMAKE_PREFIX_PATH=$onnxRoot;$env:CMAKE_PREFIX_PATH".TrimEnd(';') | Out-File -FilePath $env:GITHUB_ENV -Append
+
+    - name: Upload ONNX
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: ${{ steps.cache-key.outputs.key }}
+        path: onnx-dist
+        retention-days: 1

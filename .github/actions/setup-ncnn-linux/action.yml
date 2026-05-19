@@ -80,3 +80,10 @@ runs:
       run: |
         ncnnRoot=$(realpath ncnn-dist)
         echo "CMAKE_PREFIX_PATH=$ncnnRoot${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
+
+    - name: Upload NCNN
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: ${{ steps.cache-key.outputs.key }}
+        path: ncnn-dist
+        retention-days: 1

@@ -31,6 +31,9 @@ on:
         type: string
         required: false
 
+env:
+  PACKAGE_NAME: dfttest2_cpu
+
 jobs:
   build-wheels:
     strategy:
@@ -53,7 +56,10 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive dfttest2/dfttest2_cpu/vs-dfttest2 dfttest2/dfttest2_cpu/vapoursynth
+        run: >-
+          git submodule update --init --recursive
+          dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2
+          dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -67,13 +73,13 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         with:
-          package-dir: dfttest2/dfttest2_cpu
+          package-dir: dfttest2/${{ env.PACKAGE_NAME }}
         env:
           CIBW_ENVIRONMENT: SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CPU="${{ inputs.version }}"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: dfttest2_cpu-wheels-${{ matrix.name }}
+          name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.name }}
           path: ./wheelhouse/*.whl
 
   build-sdist:
@@ -85,7 +91,10 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive dfttest2/dfttest2_cpu/vs-dfttest2 dfttest2/dfttest2_cpu/vapoursynth
+        run: >-
+          git submodule update --init --recursive
+          dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2
+          dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -93,13 +102,13 @@ jobs:
           enable-cache: false
 
       - name: Build sdist
-        run: uv build --sdist --package vapoursynth-dfttest2_cpu
+        run: uv build --sdist --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CPU: ${{ inputs.version }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: dfttest2_cpu-sdist
+          name: ${{ env.PACKAGE_NAME }}-sdist
           path: dist/*.tar.gz
 
       - name: Generate metadata
@@ -137,8 +146,8 @@ jobs:
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
           gh workflow run cd-publish.yml
-          -f artifact-pattern=dfttest2_cpu-*
-          -f package=vapoursynth-dfttest2_cpu
+          -f artifact-pattern=${{ env.PACKAGE_NAME }}-*
+          -f package=vapoursynth-${{ env.PACKAGE_NAME }}
           -f packages-dir=dist
           -f repository=${{ inputs.repository }}
           -f repository-url="$REPOSITORY_URL"

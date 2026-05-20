@@ -59,6 +59,7 @@ on:
 env:
   HIP_LINUX: ${{ inputs.hip-linux || '7.0' }}
   HIP_WINDOWS: ${{ inputs.hip-windows || '25.Q3-WinSvr2022' }}
+  PACKAGE_NAME: bm3dhip
 
 jobs:
   build-wheels:
@@ -85,7 +86,7 @@ jobs:
         run: |
           # Workaround for Linux containers
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule update --init --recursive bm3dcuda/bm3dhip/VapourSynth-BM3DCUDA bm3dcuda/bm3dhip/vapoursynth
+          git submodule update --init --recursive bm3dcuda/${{ env.PACKAGE_NAME }}/VapourSynth-BM3DCUDA bm3dcuda/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -111,7 +112,7 @@ jobs:
           cache-key: ${{ matrix.os }}
 
       - name: Build wheels
-        run: uv build --wheel --package vapoursynth-bm3dhip
+        run: uv build --wheel --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DHIP: ${{ inputs.version }}
 
@@ -125,7 +126,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: bm3dhip-wheels-${{ matrix.os }}-${{ matrix.arch }}
+          name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/*.whl
 
   build-sdist:
@@ -137,7 +138,10 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive bm3dcuda/bm3dhip/VapourSynth-BM3DCUDA bm3dcuda/bm3dhip/vapoursynth
+        run: >-
+          git submodule update --init --recursive
+          bm3dcuda/${{ env.PACKAGE_NAME }}/VapourSynth-BM3DCUDA
+          bm3dcuda/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -145,13 +149,13 @@ jobs:
           enable-cache: false
 
       - name: Build sdist
-        run: uv build --sdist --package vapoursynth-bm3dhip
+        run: uv build --sdist --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DHIP: ${{ inputs.version }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: bm3dhip-sdist
+          name: ${{ env.PACKAGE_NAME }}-sdist
           path: dist/*.tar.gz
 
       - name: Generate metadata
@@ -191,8 +195,8 @@ jobs:
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
           gh workflow run cd-publish.yml
-          -f artifact-pattern=bm3dhip-*
-          -f package=vapoursynth-bm3dhip
+          -f artifact-pattern=${{ env.PACKAGE_NAME }}-*
+          -f package=vapoursynth-${{ env.PACKAGE_NAME }}
           -f packages-dir=dist
           -f repository=${{ inputs.repository }}
           -f repository-url="$REPOSITORY_URL"

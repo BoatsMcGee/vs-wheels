@@ -57,6 +57,7 @@ on:
 env:
   CUDA_LINUX: ${{ inputs.cuda-linux || '12.8' }}
   CUDA_WINDOWS: ${{ inputs.cuda-windows || '13.0.1' }}
+  PACKAGE_NAME: bm3dcuda
 
 jobs:
   build-wheels:
@@ -88,7 +89,7 @@ jobs:
         run: |
           # Workaround for Linux containers
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git submodule update --init --recursive bm3dcuda/bm3dcuda/VapourSynth-BM3DCUDA bm3dcuda/bm3dcuda/vapoursynth
+          git submodule update --init --recursive bm3dcuda/${{ env.PACKAGE_NAME }}/VapourSynth-BM3DCUDA bm3dcuda/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -116,7 +117,7 @@ jobs:
           cache-key: ${{ matrix.os }}
 
       - name: Build wheels
-        run: uv build --wheel --package vapoursynth-bm3dcuda
+        run: uv build --wheel --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DCUDA: ${{ inputs.version }}
 
@@ -130,7 +131,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: bm3dcuda-wheels-${{ matrix.os }}-${{ matrix.arch }}
+          name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/*.whl
 
   build-sdist:
@@ -142,7 +143,10 @@ jobs:
           fetch-depth: 0
 
       - name: Initialize submodules
-        run: git submodule update --init --recursive bm3dcuda/bm3dcuda/VapourSynth-BM3DCUDA bm3dcuda/bm3dcuda/vapoursynth
+        run: >-
+          git submodule update --init --recursive
+          bm3dcuda/${{ env.PACKAGE_NAME }}/VapourSynth-BM3DCUDA
+          bm3dcuda/${{ env.PACKAGE_NAME }}/vapoursynth
 
       - name: Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -150,13 +154,13 @@ jobs:
           enable-cache: false
 
       - name: Build sdist
-        run: uv build --sdist --package vapoursynth-bm3dcuda
+        run: uv build --sdist --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_BM3DCUDA: ${{ inputs.version }}
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: bm3dcuda-sdist
+          name: ${{ env.PACKAGE_NAME }}-sdist
           path: dist/*.tar.gz
 
       - name: Generate metadata
@@ -196,8 +200,8 @@ jobs:
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
           gh workflow run cd-publish.yml
-          -f artifact-pattern=bm3dcuda-*
-          -f package=vapoursynth-bm3dcuda
+          -f artifact-pattern=${{ env.PACKAGE_NAME }}-*
+          -f package=vapoursynth-${{ env.PACKAGE_NAME }}
           -f packages-dir=dist
           -f repository=${{ inputs.repository }}
           -f repository-url="$REPOSITORY_URL"

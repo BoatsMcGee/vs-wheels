@@ -123,6 +123,9 @@ jobs:
         uses: ./.github/actions/setup-openvino-macos
         with:
           openvino-tag: ${{ env.OPENVINO_MACOS_TAG }}
+      - name: Install jq
+        if: matrix.container
+        run: dnf install -y jq
 
       - name: Get ONNX version from ONNX Runtime
         id: get-onnx-version

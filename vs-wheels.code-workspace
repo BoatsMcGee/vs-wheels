@@ -56,6 +56,10 @@
       "name": "VSMLRT ORT",
       "path": "vsmlrt/ort",
     },
+    {
+      "name": "VSMLRT OV",
+      "path": "vsmlrt/ov",
+    },
   ],
   "settings": {
     "editor.formatOnSave": true,

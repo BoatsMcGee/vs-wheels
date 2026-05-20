@@ -1,0 +1,115 @@
+name: Setup OpenVINO (Linux)
+description: Compiles OpenVINO from source on Linux
+inputs:
+  openvino-tag:
+    description: The Git tag or commit hash of OpenVINO to build
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Define OpenVINO cache key
+      id: cache-key
+      shell: bash
+      run: |
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "x86_64" ]; then
+          ARCH_FILE=".github/cmake-cache/openvino-x64.cmake"
+        elif [ "$ARCH" = "aarch64" ]; then
+          ARCH_FILE=".github/cmake-cache/openvino-aarch64.cmake"
+        fi
+
+        HASH="${{ hashFiles(
+          '.github/cmake-cache/openvino-base.cmake',
+          '.github/cmake-cache/openvino-linux.cmake',
+          '.github/cmake-cache/openvino-x64.cmake',
+          '.github/cmake-cache/openvino-aarch64.cmake'
+        ) }}"
+        echo "key=setup-openvino-${RUNNER_OS}-${ARCH}-${{ inputs.openvino-tag }}-${HASH}" >> $GITHUB_OUTPUT
+        echo "arch_file=$ARCH_FILE" >> $GITHUB_OUTPUT
+
+    - name: Restore OpenVINO
+      id: cache-openvino
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: openvino-dist
+        key: ${{ steps.cache-key.outputs.key }}
+
+    - name: Install Build Dependencies
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "x86_64" ]; then
+          dnf install -y glibc-devel
+        elif [ "$ARCH" = "aarch64" ]; then
+          sudo apt-get install -y scons
+        fi
+
+    - name: Checkout OpenVINO
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        repository: openvinotoolkit/openvino
+        ref: ${{ inputs.openvino-tag }}
+        path: openvino
+        submodules: recursive
+
+    - name: Configure OpenVINO
+      shell: bash
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      run: |
+        CMAKE_ARGS=(
+          -S openvino
+          -B build_openvino
+          -G Ninja
+          -Wno-dev
+          -LA
+          -C "$GITHUB_WORKSPACE/.github/cmake-cache/openvino-base.cmake"
+          -C "$GITHUB_WORKSPACE/.github/cmake-cache/openvino-linux.cmake"
+        )
+
+        if [ -n "${{ steps.cache-key.outputs.arch_file }}" ]; then
+          CMAKE_ARGS+=(-C "$GITHUB_WORKSPACE/${{ steps.cache-key.outputs.arch_file }}")
+        fi
+
+        cmake "${CMAKE_ARGS[@]}"
+
+    - name: Build OpenVINO
+      shell: bash
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      run: cmake --build build_openvino
+
+    - name: Install OpenVINO
+      shell: bash
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      run: |
+        cmake --install build_openvino --prefix openvino-dist
+        cmake --install build_openvino/thirdparty/protobuf --prefix openvino-dist
+
+    - name: Save OpenVINO
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: openvino-dist
+        key: ${{ steps.cache-key.outputs.key }}
+
+    - name: Configure OpenVINO Path
+      shell: bash
+      run: |
+        openvinoRoot=$(realpath openvino-dist)
+        echo "CMAKE_PREFIX_PATH=$openvinoRoot/runtime/cmake:$openvinoRoot${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
+
+        libPath="$openvinoRoot/runtime/lib"
+        libPath="$libPath:$openvinoRoot/runtime/lib/intel64"
+        libPath="$libPath:$openvinoRoot/runtime/lib/aarch64"
+        libPath="$libPath:$openvinoRoot/runtime/3rdparty/tbb/lib"
+
+        echo "LD_LIBRARY_PATH=$libPath${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> $GITHUB_ENV
+
+    - name: Upload OpenVINO
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: ${{ steps.cache-key.outputs.key }}
+        path: openvino-dist
+        retention-days: 1

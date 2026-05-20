@@ -85,3 +85,6 @@
 [submodule "vsmlrt/ort/vapoursynth"]
 	path = vsmlrt/ort/vapoursynth
 	url = https://github.com/vapoursynth/vapoursynth/
+[submodule "vsmlrt/ov/vapoursynth"]
+	path = vsmlrt/ov/vapoursynth
+	url = https://github.com/vapoursynth/vapoursynth/

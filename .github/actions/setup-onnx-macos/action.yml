@@ -4,6 +4,10 @@ inputs:
   onnx-tag:
     description: The Git tag or commit hash of ONNX to build
     required: true
+  use-external-protobuf:
+    description: Use protobuf from CMAKE_PREFIX_PATH instead of building from submodule
+    required: false
+    default: "false"
 
 runs:
   using: composite
@@ -12,19 +16,25 @@ runs:
       id: cache-key
       shell: bash
       run: |
+        PROTO_MODE="custom"
+        if [ "${{ inputs.use-external-protobuf }}" = "true" ]; then
+          PROTO_MODE="external"
+        fi
         echo "key=${{ format(
           'setup-onnx-{0}-{1}-{2}-{3}',
           runner.os,
           runner.arch,
           inputs.onnx-tag,
           hashFiles('.github/cmake-cache/onnx-base.cmake', '.github/cmake-cache/onnx-unix.cmake')
-        ) }}" >> $GITHUB_OUTPUT
+        ) }}-${PROTO_MODE}" >> $GITHUB_OUTPUT
 
     - name: Restore ONNX
       id: cache-onnx
       uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
-        path: onnx-dist
+        path: |
+          onnx-dist
+          build_onnx
         key: ${{ steps.cache-key.outputs.key }}
 
     - name: Install dependencies
@@ -44,9 +54,16 @@ runs:
     - name: Configure ONNX
       shell: bash
       if: steps.cache-onnx.outputs.cache-hit != 'true'
-      run: cmake -S onnx -B build_onnx -G Ninja -LA
-        -C "$GITHUB_WORKSPACE/.github/cmake-cache/onnx-base.cmake"
-        -C "$GITHUB_WORKSPACE/.github/cmake-cache/onnx-unix.cmake"
+      run: |
+        CMAKE_ARGS=(
+          -S onnx -B build_onnx -G Ninja -LA
+          -C "$GITHUB_WORKSPACE/.github/cmake-cache/onnx-base.cmake"
+          -C "$GITHUB_WORKSPACE/.github/cmake-cache/onnx-unix.cmake"
+        )
+        if [ "${{ inputs.use-external-protobuf }}" = "true" ]; then
+          CMAKE_ARGS+=(-DONNX_BUILD_CUSTOM_PROTOBUF=OFF)
+        fi
+        cmake "${CMAKE_ARGS[@]}"
 
     - name: Build ONNX
       shell: bash
@@ -62,7 +79,9 @@ runs:
       if: steps.cache-onnx.outputs.cache-hit != 'true'
       uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
-        path: onnx-dist
+        path: |
+          onnx-dist
+          build_onnx
         key: ${{ steps.cache-key.outputs.key }}
 
     - name: Configure ONNX Path

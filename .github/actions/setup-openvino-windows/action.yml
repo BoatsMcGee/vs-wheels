@@ -1,0 +1,90 @@
+name: Setup OpenVINO (Windows)
+description: Compiles OpenVINO from source on Windows
+inputs:
+  openvino-tag:
+    description: The Git tag or commit hash of OpenVINO to build
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Fix PATH (Remove Strawberry Perl)
+      shell: pwsh
+      run: |
+        $newPath = ($env:PATH -split ';' | Where-Object { $_ -notmatch 'Strawberry' }) -join ';'
+        "PATH=$newPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+    - name: Define OpenVINO cache key
+      id: cache-key
+      shell: pwsh
+      run: |
+        $hash = "${{ hashFiles(
+          '.github/cmake-cache/openvino-base.cmake',
+          '.github/cmake-cache/openvino-windows.cmake',
+          '.github/cmake-cache/openvino-x64.cmake'
+        ) }}"
+        "key=setup-openvino-${{ runner.os }}-${{ inputs.openvino-tag }}-$hash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+    - name: Restore OpenVINO
+      id: cache-openvino
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: openvino-dist
+        key: ${{ steps.cache-key.outputs.key }}
+
+    - name: Checkout OpenVINO
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        repository: openvinotoolkit/openvino
+        ref: ${{ inputs.openvino-tag }}
+        path: openvino
+        submodules: recursive
+
+    - name: Configure OpenVINO
+      shell: pwsh
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      run: |
+        $cmakeArgs = @(
+          "-S", "openvino",
+          "-B", "build_openvino",
+          "-G", "Ninja",
+          "-Wno-dev",
+          "-LA",
+          "-C", "$env:GITHUB_WORKSPACE/.github/cmake-cache/openvino-base.cmake",
+          "-C", "$env:GITHUB_WORKSPACE/.github/cmake-cache/openvino-windows.cmake",
+          "-C", "$env:GITHUB_WORKSPACE/.github/cmake-cache/openvino-x64.cmake"
+        )
+        cmake @cmakeArgs
+
+    - name: Build OpenVINO
+      shell: pwsh
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      run: cmake --build build_openvino
+
+    - name: Install OpenVINO
+      shell: pwsh
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      run: |
+        cmake --install build_openvino --prefix openvino-dist
+        cmake --install build_openvino/thirdparty/protobuf --prefix openvino-dist
+
+    - name: Save OpenVINO
+      if: steps.cache-openvino.outputs.cache-hit != 'true'
+      uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+      with:
+        path: openvino-dist
+        key: ${{ steps.cache-key.outputs.key }}
+
+    - name: Configure OpenVINO Path
+      shell: pwsh
+      run: |
+        $openvinoRoot = (Resolve-Path "openvino-dist").Path
+        "CMAKE_PREFIX_PATH=$openvinoRoot/runtime/cmake;$openvinoRoot;$env:CMAKE_PREFIX_PATH".TrimEnd(';') | Out-File -FilePath $env:GITHUB_ENV -Append
+
+    - name: Upload OpenVINO
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: ${{ steps.cache-key.outputs.key }}
+        path: openvino-dist
+        retention-days: 1

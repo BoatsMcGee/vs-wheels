@@ -218,13 +218,3 @@ jobs:
       wheel-pattern: dfttest2_cuda-wheels-*
       sdist-name: dfttest2_cuda-sdist
       display-name: vapoursynth-dfttest2_cuda
-
-  update-index:
-    name: Update package index
-    if: github.event_name == 'workflow_dispatch' && inputs.publish
-    needs: [upload-release]
-    uses: ./.github/workflows/cd-update-index.yml
-    permissions:
-      contents: read
-      pages: write
-      id-token: write

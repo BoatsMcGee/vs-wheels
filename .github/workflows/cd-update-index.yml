@@ -1,10 +1,11 @@
 name: Update Package Index
 
 on:
-  workflow_call:
   workflow_dispatch:
   repository_dispatch:
     types: ["index"]
+  release:
+    types: [published, prereleased, unpublished, deleted]
 
 permissions:
   contents: read

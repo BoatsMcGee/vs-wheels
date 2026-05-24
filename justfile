@@ -15,6 +15,7 @@ format:
   if ($files) {
     uv run python -m gersemi $files -i --definitions bm3dcuda/bm3dcpu/Common.cmake
   }
+  uv run ruff format .
 
 # Show submodule status with lightweight tags
 substatus:

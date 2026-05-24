@@ -67,11 +67,7 @@ if(WIN32)
     list(APPEND _DLLS ${_TBB_DLL})
   else()
     # Copy TBB DLL
-    file(
-      GLOB _DLLS
-      "${OpenVINO_DIR}/../3rdparty/tbb/bin/tbb12.dll"
-      "${OpenVINO_DIR}/../../3rdparty/tbb/bin/tbb12.dll"
-    )
+    file(GLOB _DLLS "${OpenVINO_DIR}/../3rdparty/tbb/bin/tbb12.dll" "${OpenVINO_DIR}/../../3rdparty/tbb/bin/tbb12.dll")
   endif()
 
   if(_DLLS)
@@ -98,7 +94,6 @@ else()
     message(WARNING "Could not find OpenVINO libraries/plugins")
   endif()
 endif()
-
 
 target_include_directories(vsov PUBLIC "${PROJECT_BINARY_DIR}")
 

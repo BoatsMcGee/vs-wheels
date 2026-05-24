@@ -60,6 +60,10 @@
       "name": "VSMLRT OV",
       "path": "vsmlrt/ov",
     },
+    {
+      "name": "VSMLRT TRT",
+      "path": "vsmlrt/trt",
+    },
   ],
   "settings": {
     "editor.formatOnSave": true,

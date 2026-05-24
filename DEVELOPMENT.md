@@ -81,6 +81,10 @@ https://en.wikipedia.org/wiki/CUDA#GPUs_supported
 
 Subpackage name -> https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/
 
+### RHEL8 CUDA repo index
+
+https://developer.download.nvidia.com/compute/cuda/repos/rhel8/
+
 ## AMD
 
 ### Compatibility Matrix

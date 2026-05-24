@@ -27,7 +27,9 @@
     "dfttest2/dfttest2_nvrtc/vapoursynth",
     "vsmlrt/ncnn/vapoursynth",
     "vsmlrt/ort/vapoursynth",
-    "vsmlrt/ov/vapoursynth"
+    "vsmlrt/ov/vapoursynth",
+    "vsmlrt/trt/vapoursynth",
+    "vsmlrt/trt_rtx/vapoursynth"
   ],
   "packageRules": [
     {

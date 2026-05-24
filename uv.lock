@@ -22,6 +22,7 @@ members = [
     "vapoursynth-mlrt-ncnn",
     "vapoursynth-mlrt-ort",
     "vapoursynth-mlrt-ov",
+    "vapoursynth-mlrt-trt",
     "vs-wheels",
 ]
 
@@ -1082,6 +1083,16 @@ requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
 [[package]]
 name = "vapoursynth-mlrt-ov"
 source = { editable = "vsmlrt/ov" }
+dependencies = [
+    { name = "vapoursynth" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
+
+[[package]]
+name = "vapoursynth-mlrt-trt"
+source = { editable = "vsmlrt/trt" }
 dependencies = [
     { name = "vapoursynth" },
 ]

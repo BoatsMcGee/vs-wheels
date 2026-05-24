@@ -1,0 +1,272 @@
+name: MLRT-TRT
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - vsmlrt/trt/**
+      - .github/workflows/pkg-trt.yml
+      - .github/actions/setup-cuda-*/**
+      - .github/actions/setup-tensorrt-*/**
+  pull_request:
+    paths:
+      - vsmlrt/trt/**
+      - .github/workflows/pkg-trt.yml
+      - .github/actions/setup-cuda-*/**
+      - .github/actions/setup-tensorrt-*/**
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish built distributions
+        type: boolean
+        required: false
+        default: false
+      repository:
+        description: Package index to publish to
+        type: choice
+        required: true
+        default: testpypi
+        options:
+          - testpypi
+          - pypi
+      version:
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT)
+        type: string
+        required: false
+      cuda-windows:
+        description: CUDA version for Windows
+        type: string
+        required: false
+        default: "13.0.1"
+      cuda-linux-x86-64:
+        description: CUDA version for Linux x86_64
+        type: string
+        required: false
+        default: "13.2"
+      cuda-linux-aarch64:
+        description: CUDA version for Linux AARCH64
+        type: string
+        required: false
+        default: "13.2"
+      tensorrt-windows:
+        description: TensorRT version for Windows (https://developer.nvidia.com/tensorrt/download/)
+        type: string
+        required: false
+        default: "10.16.1.11.cuda13.2"
+      tensorrt-linux:
+        description: TensorRT version for Linux x86_64 (https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/)
+        type: string
+        required: false
+        default: "10.16.1.11-1.cuda13.2"
+      tensorrt-linux-aarch64:
+        description: TensorRT version for Linux AARCH64 (https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa/)
+        type: string
+        required: false
+        default: "10.16.1.11-1+cuda13.2"
+
+env:
+  CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '13.2.1' }}
+  CUDA_LINUX_x86_64_VERSION: ${{ inputs.cuda-linux-x86-64 || '13.2' }}
+  CUDA_LINUX_AARCH64_VERSION: ${{ inputs.cuda-linux-aarch64 || '13.2' }}
+  TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '10.16.1.11.cuda13.2' }}
+  TENSORRT_LINUX_VERSION: ${{ inputs.tensorrt-linux || '10.16.1.11-1.cuda13.2' }}
+  TENSORRT_LINUX_AARCH64_VERSION: ${{ inputs.tensorrt-linux-aarch64 || '10.16.1.11-1+cuda13.2' }}
+  PACKAGE_NAME: trt
+
+jobs:
+  build-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-24.04
+            cuda_repo: rhel8/x86_64
+            container: quay.io/pypa/manylinux_2_28_x86_64
+          - name: Linux ARM64
+            os: ubuntu-24.04-arm
+            cuda_repo: ubuntu2404/sbsa/
+          - name: Windows x64
+            os: windows-2025
+
+    name: Build wheels on ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Initialize submodules
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init --recursive vsmlrt/${{ env.PACKAGE_NAME }}/vs-mlrt vsmlrt/${{ env.PACKAGE_NAME }}/vapoursynth
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
+
+      - name: Setup MSVC
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/setup-msvc
+
+      - name: Install build tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          uv tool install cmake
+          uv tool install ninja
+
+      - name: Setup CUDA (Windows)
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/setup-cuda-windows
+        with:
+          cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
+          cuda-components: >-
+            nvcc,
+            cudart,
+            cuda_profiler_api,
+            crt,
+            nvptxcompiler
+          cache-key: ${{ matrix.os }}
+
+      - name: Setup TensorRT (Windows)
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/setup-tensorrt-windows
+        with:
+          tensorrt-version: ${{ env.TENSORRT_WINDOWS_VERSION }}
+          cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
+          cache-key: ${{ matrix.os }}
+
+      - name: Setup TensorRT (Linux x64)
+        if: runner.os == 'Linux' && runner.arch == 'X64'
+        uses: ./.github/actions/setup-tensorrt-linux-x86-64
+        with:
+          tensorrt-version: ${{ env.TENSORRT_LINUX_VERSION }}
+          tensorrt-components: libnvinfer-devel, libnvinfer-plugin-devel, libnvinfer-dispatch-devel, libnvinfer-lean-devel
+          cuda-repo: ${{ matrix.cuda_repo }}
+          cuda-version: ${{ env.CUDA_LINUX_x86_64_VERSION }}
+          cuda-components: >-
+            cuda-nvcc,
+            cuda-cudart-devel,
+            cuda-driver-devel,
+            cuda-profiler-api
+
+      - name: Setup TensorRT (Linux ARM64)
+        if: runner.os == 'Linux' && runner.arch == 'ARM64'
+        uses: ./.github/actions/setup-tensorrt-linux-aarch64
+        with:
+          tensorrt-version: ${{ env.TENSORRT_LINUX_AARCH64_VERSION }}
+          tensorrt-components: libnvinfer-dev, libnvinfer-plugin-dev, libnvinfer-dispatch-dev, libnvinfer-lean-dev
+          cuda-repo: ${{ matrix.cuda_repo }}
+          cuda-version: ${{ env.CUDA_LINUX_x86_64_VERSION }}
+          cuda-components: >-
+            cuda-nvcc,
+            cuda-cudart-dev,
+            cuda-driver-dev,
+            cuda-profiler-api
+
+      - name: Build wheel
+        run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT: ${{ inputs.version }}
+
+      - name: Repair wheel (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          uvx --with patchelf auditwheel repair \
+            --exclude libnvinfer.so.10 \
+            --exclude libnvinfer_plugin.so.10 \
+            --exclude libnvinfer_dispatch.so.10 \
+            --exclude libnvinfer_lean.so.10 \
+            --strip dist/*.whl \
+            -w repaired_wheels
+          rm dist/*.whl
+          mv repaired_wheels/*.whl dist/
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.name }}
+          path: ./dist/*.whl
+
+  build-sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Initialize submodules
+        run: >-
+          git submodule update --init --recursive
+          vsmlrt/${{ env.PACKAGE_NAME }}/vs-mlrt
+          vsmlrt/${{ env.PACKAGE_NAME }}/vapoursynth
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: false
+
+      - name: Build sdist
+        run: uv build --sdist --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT: ${{ inputs.version }}
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-sdist
+          path: dist/*.tar.gz
+
+      - name: Generate metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: |
+          VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
+          cat << EOF > metadata.json
+          {
+            "package": "${{ env.PACKAGE_NAME }}",
+            "version": "$VERSION",
+            "cuda_windows": "${{ env.CUDA_WINDOWS_VERSION }}",
+            "cuda_linux": "${{ env.CUDA_LINUX_x86_64_VERSION }}",
+            "tensorrt_windows": "${{ env.TENSORRT_WINDOWS_VERSION }}",
+            "tensorrt_linux": "${{ env.TENSORRT_LINUX_VERSION }}"
+          }
+          EOF
+
+      - name: Upload metadata
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-metadata
+          path: metadata.json
+
+  trigger-publish:
+    name: Trigger ${{ inputs.repository }} publish
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: [build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+
+    steps:
+      - name: Trigger publish workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
+        run: >-
+          gh workflow run publish.yml
+          -f artifact-pattern=${{ env.PACKAGE_NAME }}-*
+          -f package=vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
+          -f packages-dir=dist
+          -f repository=${{ inputs.repository }}
+          -f repository-url="$REPOSITORY_URL"
+          -f run-id=${{ github.run_id }}
+          --ref ${{ github.ref_name }}

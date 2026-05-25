@@ -38,7 +38,7 @@ on:
         description: CUDA version for Windows
         type: string
         required: false
-        default: "13.0.1"
+        default: "13.2.1"
       cuda-linux-x86-64:
         description: CUDA version for Linux x86_64
         type: string

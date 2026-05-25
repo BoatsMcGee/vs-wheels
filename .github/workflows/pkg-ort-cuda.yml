@@ -53,33 +53,33 @@ on:
         required: false
         default: "v1.26.0"
       cuda-windows:
-        description: CUDA version for Windows
+        description: CUDA version for Windows (https://developer.nvidia.com/cuda-toolkit-archive)
         type: string
         required: false
-        default: "13.0.1"
+        default: "13.2.1"
       cuda-linux:
-        description: CUDA version for Linux
+        description: CUDA version for Linux (https://developer.nvidia.com/cuda-toolkit-archive)
         type: string
         required: false
-        default: "13.0"
+        default: "13.2"
       cudnn-windows:
-        description: cuDNN version for Windows
+        description: cuDNN version for Windows (https://developer.nvidia.com/cudnn-downloads, https://developer.nvidia.com/cudnn-archive)
         type: string
         required: false
-        default: "9.13.0.50"
+        default: "9.22.0.52"
       cudnn-linux:
-        description: cuDNN version for Linux
+        description: cuDNN version for Linux (https://developer.nvidia.com/cudnn-downloads, https://developer.nvidia.com/cudnn-archive)
         type: string
         required: false
-        default: "9.13.0.50"
+        default: "9.22.0.52"
 
 env:
   ONNXRUNTIME_WINDOWS_TAG: ${{ inputs.onnxruntime-windows-tag || 'v1.26.0' }}
   ONNXRUNTIME_LINUX_TAG: ${{ inputs.onnxruntime-linux-tag || 'v1.26.0' }}
-  CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '13.0.1' }}
-  CUDA_LINUX_VERSION: ${{ inputs.cuda-linux || '13.0' }}
-  CUDNN_WINDOWS_VERSION: ${{ inputs.cudnn-windows || '9.13.0.50' }}
-  CUDNN_LINUX_VERSION: ${{ inputs.cudnn-linux || '9.13.0.50' }}
+  CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '13.2.1' }}
+  CUDA_LINUX_VERSION: ${{ inputs.cuda-linux || '13.2' }}
+  CUDNN_WINDOWS_VERSION: ${{ inputs.cudnn-windows || '9.22.0.52' }}
+  CUDNN_LINUX_VERSION: ${{ inputs.cudnn-linux || '9.22.0.52' }}
   PACKAGE_NAME: ort
 
 jobs:

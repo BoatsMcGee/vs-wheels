@@ -35,30 +35,30 @@ on:
         type: string
         required: false
       hip-linux:
-        description: HIP version for Linux (7.0, 7.2.2)
+        description: HIP version for Linux (7.0, 7.2.3)
         type: string
         required: false
-        default: "7.0"
+        default: "7.2.3"
       hip-windows:
         description: HIP version for Windows (e.g., 25.Q3 -> 6.4.2 | 26.Q1 -> 7.1.1)
         type: choice
         required: true
         options:
-          - 25.Q3-WinSvr2022
           - 26.Q1-Win11
+          - 25.Q3-WinSvr2022
       windows-runner:
         description: Windows runner to use
         type: choice
         required: true
-        default: windows-2022
+        default: windows-2025-vs2026
         options:
           - windows-2025-vs2026
           - windows-2025
           - windows-2022
 
 env:
-  HIP_LINUX: ${{ inputs.hip-linux || '7.0' }}
-  HIP_WINDOWS: ${{ inputs.hip-windows || '25.Q3-WinSvr2022' }}
+  HIP_LINUX: ${{ inputs.hip-linux || '7.2.3' }}
+  HIP_WINDOWS: ${{ inputs.hip-windows || '26.Q1-Win11' }}
   PACKAGE_NAME: bm3dhip
 
 jobs:

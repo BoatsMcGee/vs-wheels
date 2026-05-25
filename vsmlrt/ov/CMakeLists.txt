@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(VSOV_Package)
 
+# === C++ Standard & Options ===
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -15,10 +16,17 @@ set(
   "Path to VapourSynth headers"
 )
 
+if(SKBUILD_PROJECT_VERSION)
+  set(VCS_TAG "v${SKBUILD_PROJECT_VERSION}" CACHE STRING "Version from scikit-build-core")
+  set(CMAKE_DISABLE_FIND_PACKAGE_Git ON)
+endif()
+
+# === Dependencies ===
 find_package(Protobuf REQUIRED CONFIG)
 find_package(ONNX REQUIRED)
 find_package(OpenVINO REQUIRED CONFIG)
 
+# === Target Definition & Configuration ===
 add_library(
   vsov
   SHARED
@@ -28,16 +36,25 @@ add_library(
   vs-mlrt/common/convert_float_to_float16.cpp
 )
 
-if(WIN32_SHARED_OPENVINO)
-  target_compile_definitions(vsov PRIVATE WIN32_SHARED_OPENVINO)
-endif()
-
-target_include_directories(vsov PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vsov" "vs-mlrt/common")
-target_link_libraries(vsov PRIVATE ONNX::onnx openvino::runtime)
 set_target_properties(
   vsov
   PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
 )
+
+target_include_directories(
+  vsov
+  PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vsov" "vs-mlrt/common"
+  PUBLIC "${PROJECT_BINARY_DIR}"
+)
+
+if(WIN32_SHARED_OPENVINO)
+  target_compile_definitions(vsov PRIVATE WIN32_SHARED_OPENVINO)
+endif()
+
+configure_file(vs-mlrt/vsov/config.h.in config.h)
+
+# === Link Libraries Setup ===
+target_link_libraries(vsov PRIVATE ONNX::onnx openvino::runtime)
 
 if(WIN32)
   if(WIN32_SHARED_OPENVINO)
@@ -47,7 +64,10 @@ if(WIN32)
   endif()
 endif()
 
-# Repair
+# === Packaging & Installation ===
+install(TARGETS vsov LIBRARY DESTINATION . RUNTIME DESTINATION .)
+
+# Helper runtime DLL/SO copying/installing logic
 if(WIN32)
   if(WIN32_SHARED_OPENVINO)
     # Copy OpenVINO Runtime DLLs
@@ -95,17 +115,7 @@ else()
   endif()
 endif()
 
-target_include_directories(vsov PUBLIC "${PROJECT_BINARY_DIR}")
-
-if(SKBUILD_PROJECT_VERSION)
-  set(VCS_TAG "v${SKBUILD_PROJECT_VERSION}" CACHE STRING "Version from scikit-build-core")
-  set(CMAKE_DISABLE_FIND_PACKAGE_Git ON)
-endif()
-
-configure_file(vs-mlrt/vsov/config.h.in config.h)
-
-install(TARGETS vsov LIBRARY DESTINATION . RUNTIME DESTINATION .)
-
+# Write VapourSynth Manifest
 if(WIN32)
   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/manifest.vs" "[VapourSynth Manifest V1]\nvsov\n")
 else()

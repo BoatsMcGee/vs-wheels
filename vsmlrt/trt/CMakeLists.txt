@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
 project(VSTRT_Package)
 
+# === C++ Standard & Options ===
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Options
+# TensorRT library suffix options
 set(TENSORRT_LIBRARY_SUFFIX "" CACHE STRING "TensorRT library suffix")
 if(WIN32 AND NOT TENSORRT_LIBRARY_SUFFIX)
   set(TENSORRT_LIBRARY_SUFFIX "_10")
@@ -18,52 +19,58 @@ set(
   "Path to VapourSynth headers"
 )
 
+if(SKBUILD_PROJECT_VERSION)
+  set(VCS_TAG "v${SKBUILD_PROJECT_VERSION}" CACHE STRING "Version from scikit-build-core")
+  set(CMAKE_DISABLE_FIND_PACKAGE_Git ON)
+endif()
+
+# === Dependencies ===
 find_package(CUDAToolkit REQUIRED)
 
+# === Target Definition & Configuration ===
 add_library(vstrt SHARED vs-mlrt/vstrt/vs_tensorrt.cpp vs-mlrt/vstrt/win32.cpp)
-
-target_include_directories(
-  vstrt
-  PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vstrt" "vs-mlrt/common" ${CUDAToolkit_INCLUDE_DIRS}
-)
-
-if(DEFINED ENV{TENSORRT_HOME})
-  file(TO_CMAKE_PATH "$ENV{TENSORRT_HOME}" _TENSORRT_HOME)
-  target_include_directories(vstrt PRIVATE "${_TENSORRT_HOME}/include")
-  target_link_directories(vstrt PRIVATE "${_TENSORRT_HOME}/lib")
-
-  message(STATUS "Using TENSORRT_HOME: ${_TENSORRT_HOME}")
-else()
-  message(WARNING "TENSORRT_HOME not set")
-endif()
-
-target_link_libraries(vstrt PRIVATE "nvinfer${TENSORRT_LIBRARY_SUFFIX}" CUDA::cudart_static)
-
-if(MSVC)
-  target_link_options(vstrt PRIVATE "/DELAYLOAD:nvinfer${TENSORRT_LIBRARY_SUFFIX}.dll" "delayimp.lib")
-endif()
-
-target_compile_definitions(vstrt PRIVATE USE_NVINFER_PLUGIN)
-target_link_libraries(vstrt PRIVATE "nvinfer_plugin${TENSORRT_LIBRARY_SUFFIX}")
-if(MSVC)
-  target_link_options(vstrt PRIVATE "/DELAYLOAD:nvinfer_plugin${TENSORRT_LIBRARY_SUFFIX}.dll")
-endif()
 
 set_target_properties(
   vstrt
   PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
 )
 
-target_include_directories(vstrt PUBLIC "${PROJECT_BINARY_DIR}")
+target_include_directories(
+  vstrt
+  PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vstrt" "vs-mlrt/common" ${CUDAToolkit_INCLUDE_DIRS}
+  PUBLIC "${PROJECT_BINARY_DIR}"
+)
 
-if(SKBUILD_PROJECT_VERSION)
-  set(VCS_TAG "v${SKBUILD_PROJECT_VERSION}" CACHE STRING "Version from scikit-build-core")
-  set(CMAKE_DISABLE_FIND_PACKAGE_Git ON)
-endif()
+target_compile_definitions(vstrt PRIVATE USE_NVINFER_PLUGIN)
 
 configure_file(vs-mlrt/vstrt/config.h.in config.h)
 
-# repair
+# === Link Libraries Setup ===
+target_link_libraries(vstrt PRIVATE "nvinfer${TENSORRT_LIBRARY_SUFFIX}" CUDA::cudart_static)
+
+if(MSVC)
+  target_link_options(vstrt PRIVATE "/DELAYLOAD:nvinfer${TENSORRT_LIBRARY_SUFFIX}.dll" "delayimp.lib")
+endif()
+
+# Configure TensorRT home directory & paths
+if(DEFINED ENV{TENSORRT_HOME})
+  file(TO_CMAKE_PATH "$ENV{TENSORRT_HOME}" _TENSORRT_HOME)
+  target_include_directories(vstrt PRIVATE "${_TENSORRT_HOME}/include")
+  target_link_directories(vstrt PRIVATE "${_TENSORRT_HOME}/lib")
+  message(STATUS "Using TENSORRT_HOME: ${_TENSORRT_HOME}")
+else()
+  message(WARNING "TENSORRT_HOME not set")
+endif()
+
+target_link_libraries(vstrt PRIVATE "nvinfer_plugin${TENSORRT_LIBRARY_SUFFIX}")
+if(MSVC)
+  target_link_options(vstrt PRIVATE "/DELAYLOAD:nvinfer_plugin${TENSORRT_LIBRARY_SUFFIX}.dll")
+endif()
+
+# === Packaging & Installation ===
+install(TARGETS vstrt LIBRARY DESTINATION . RUNTIME DESTINATION .)
+
+# Helper runtime DLL/SO copying/installing logic
 if(WIN32)
   file(
     GLOB _DLLS
@@ -111,8 +118,7 @@ else()
   endif()
 endif()
 
-install(TARGETS vstrt LIBRARY DESTINATION . RUNTIME DESTINATION .)
-
+# Write VapourSynth Manifest
 if(WIN32)
   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/manifest.vs" "[VapourSynth Manifest V1]\nvstrt\n")
 else()

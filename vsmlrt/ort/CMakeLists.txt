@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(VSORT_Package)
 
+# === C++ Standard & Options ===
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -17,10 +18,21 @@ set(
   "Path to VapourSynth headers"
 )
 
+if(SKBUILD_PROJECT_VERSION)
+  set(VCS_TAG "v${SKBUILD_PROJECT_VERSION}" CACHE STRING "Version from scikit-build-core")
+  set(CMAKE_DISABLE_FIND_PACKAGE_Git ON)
+endif()
+
+# === Dependencies ===
 find_package(Protobuf REQUIRED CONFIG)
 find_package(ONNX REQUIRED)
 find_package(onnxruntime REQUIRED)
 
+if(ENABLE_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+endif()
+
+# === Target Definition & Configuration ===
 add_library(
   vsort
   SHARED
@@ -30,29 +42,47 @@ add_library(
   vs-mlrt/common/convert_float_to_float16.cpp
 )
 
-target_include_directories(vsort PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vsort" "vs-mlrt/common")
-target_link_libraries(vsort PRIVATE ONNX::onnx onnxruntime::onnxruntime)
 set_target_properties(
   vsort
   PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
 )
 
-if(MSVC)
-  target_link_options(vsort PRIVATE "/DELAYLOAD:onnxruntime.dll" "delayimp.lib")
-endif()
+target_include_directories(
+  vsort
+  PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vsort" "vs-mlrt/common"
+  PUBLIC "${PROJECT_BINARY_DIR}"
+)
 
 if(ENABLE_CUDA)
-  find_package(CUDAToolkit REQUIRED)
   target_compile_definitions(vsort PRIVATE ENABLE_CUDA)
   target_include_directories(vsort PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
-  target_link_libraries(vsort PRIVATE CUDA::cudart_static)
 endif()
 
 if(ENABLE_DML)
   target_compile_definitions(vsort PRIVATE ENABLE_DML)
 endif()
 
-# Repair
+if(ENABLE_COREML)
+  target_compile_definitions(vsort PRIVATE ENABLE_COREML=1)
+endif()
+
+configure_file(vs-mlrt/vsort/config.h.in config.h)
+
+# === Link Libraries Setup ===
+target_link_libraries(vsort PRIVATE ONNX::onnx onnxruntime::onnxruntime)
+
+if(MSVC)
+  target_link_options(vsort PRIVATE "/DELAYLOAD:onnxruntime.dll" "delayimp.lib")
+endif()
+
+if(ENABLE_CUDA)
+  target_link_libraries(vsort PRIVATE CUDA::cudart_static)
+endif()
+
+# === Packaging & Installation ===
+install(TARGETS vsort LIBRARY DESTINATION . RUNTIME DESTINATION .)
+
+# Helper runtime DLL/SO copying/installing logic
 if(WIN32)
   # Copy ONNX Runtime
   get_filename_component(_ROOT "${onnxruntime_DIR}/../../.." ABSOLUTE)
@@ -150,21 +180,7 @@ if(UNIX AND NOT APPLE AND ENABLE_CUDA)
   endif()
 endif()
 
-if(ENABLE_COREML)
-  target_compile_definitions(vsort PRIVATE ENABLE_COREML=1)
-endif()
-
-target_include_directories(vsort PUBLIC "${PROJECT_BINARY_DIR}")
-
-if(SKBUILD_PROJECT_VERSION)
-  set(VCS_TAG "v${SKBUILD_PROJECT_VERSION}" CACHE STRING "Version from scikit-build-core")
-  set(CMAKE_DISABLE_FIND_PACKAGE_Git ON)
-endif()
-
-configure_file(vs-mlrt/vsort/config.h.in config.h)
-
-install(TARGETS vsort LIBRARY DESTINATION . RUNTIME DESTINATION .)
-
+# Write VapourSynth Manifest
 if(WIN32)
   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/manifest.vs" "[VapourSynth Manifest V1]\nvsort\n")
 else()

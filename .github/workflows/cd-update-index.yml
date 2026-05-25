@@ -37,25 +37,10 @@ jobs:
         with:
           enable-cache: false
 
-      - name: Restore index cache
-        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-        with:
-          path: _site/packages.json
-          key: pypi-index-${{ github.run_id }}
-          restore-keys: |
-            pypi-index-
-
       - name: Generate PEP 503 index
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: uv run --script scripts/generate_index.py _site
-
-      - name: Save index cache
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-        if: always()
-        with:
-          path: _site/packages.json
-          key: pypi-index-${{ github.run_id }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5

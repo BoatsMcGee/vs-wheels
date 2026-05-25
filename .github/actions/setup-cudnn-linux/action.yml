@@ -23,19 +23,6 @@ runs:
         CUDA_VER="${{ inputs.cuda-version }}"
         echo "cuda_major=${CUDA_VER%%.*}" >> $GITHUB_OUTPUT
 
-    - name: Define cache key
-      id: cache-key
-      shell: bash
-      run: |
-        echo "key=setup-cudnn-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cudnn-version }}-cuda${{ steps.vars.outputs.cuda_major }}" >> $GITHUB_OUTPUT
-
-    - name: Restore cuDNN
-      id: cache-cudnn
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-      with:
-        path: cudnn-linux-${{ steps.vars.outputs.arch }}-${{ inputs.cudnn-version }}_cuda${{ steps.vars.outputs.cuda_major }}-archive
-        key: ${{ steps.cache-key.outputs.key }}
-
     - name: Download cuDNN
       if: steps.cache-cudnn.outputs.cache-hit != 'true'
       shell: bash
@@ -50,13 +37,6 @@ runs:
         curl -sSL -o cudnn.tar.xz "$URL"
         tar -xf cudnn.tar.xz
         rm cudnn.tar.xz
-
-    - name: Save cuDNN
-      if: steps.cache-cudnn.outputs.cache-hit != 'true'
-      uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-      with:
-        path: cudnn-linux-${{ steps.vars.outputs.arch }}-${{ inputs.cudnn-version }}_cuda${{ steps.vars.outputs.cuda_major }}-archive
-        key: ${{ steps.cache-key.outputs.key }}
 
     - name: Configure cuDNN Path
       shell: bash

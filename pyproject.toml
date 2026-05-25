@@ -55,6 +55,7 @@ members = [
     "vsmlrt/ort",
     "vsmlrt/ov",
     "vsmlrt/trt",
+    "vsmlrt/trt_rtx",
 ]
 
 [tool.mypy]

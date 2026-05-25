@@ -1,22 +1,20 @@
-name: MLRT-TRT
+name: MLRT-TRT-RTX
 
 on:
   push:
     branches:
       - master
     paths:
-      - vsmlrt/trt/**
-      - .github/workflows/pkg-trt.yml
+      - vsmlrt/trt_rtx/**
+      - .github/workflows/pkg-trt-rtx.yml
       - .github/actions/setup-cuda-*/**
-      - .github/actions/setup-tensorrt-linux-*/**
-      - .github/actions/setup-tensorrt-windows/**
+      - .github/actions/setup-tensorrt-rtx-*/**
   pull_request:
     paths:
-      - vsmlrt/trt/**
-      - .github/workflows/pkg-trt.yml
+      - vsmlrt/trt_rtx/**
+      - .github/workflows/pkg-trt-rtx.yml
       - .github/actions/setup-cuda-*/**
-      - .github/actions/setup-tensorrt-linux-*/**
-      - .github/actions/setup-tensorrt-windows/**
+      - .github/actions/setup-tensorrt-rtx-*/**
   workflow_dispatch:
     inputs:
       publish:
@@ -33,7 +31,7 @@ on:
           - testpypi
           - pypi
       version:
-        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT)
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX)
         type: string
         required: false
       cuda-windows:
@@ -41,40 +39,28 @@ on:
         type: string
         required: false
         default: "13.2.1"
-      cuda-linux-x86-64:
+      cuda-linux:
         description: CUDA version for Linux x86_64
         type: string
         required: false
         default: "13.2"
-      cuda-linux-aarch64:
-        description: CUDA version for Linux AARCH64
+      tensorrt-rtx-windows:
+        description: TensorRT version for Windows (https://developer.nvidia.com/tensorrt-rtx)
         type: string
         required: false
-        default: "13.2"
-      tensorrt-windows:
-        description: TensorRT version for Windows (https://developer.nvidia.com/tensorrt/download/)
+        default: "1.4.0.76"
+      tensorrt-rtx-linux:
+        description: TensorRT version for Linux x86_64 (https://developer.nvidia.com/tensorrt-rtx)
         type: string
         required: false
-        default: "10.16.1.11.cuda13.2"
-      tensorrt-linux:
-        description: TensorRT version for Linux x86_64 (https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/)
-        type: string
-        required: false
-        default: "10.16.1.11-1.cuda13.2"
-      tensorrt-linux-aarch64:
-        description: TensorRT version for Linux AARCH64 (https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa/)
-        type: string
-        required: false
-        default: "10.16.1.11-1+cuda13.2"
+        default: "1.4.0.76"
 
 env:
   CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '13.2.1' }}
-  CUDA_LINUX_x86_64_VERSION: ${{ inputs.cuda-linux-x86-64 || '13.2' }}
-  CUDA_LINUX_AARCH64_VERSION: ${{ inputs.cuda-linux-aarch64 || '13.2' }}
-  TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '10.16.1.11.cuda13.2' }}
-  TENSORRT_LINUX_VERSION: ${{ inputs.tensorrt-linux || '10.16.1.11-1.cuda13.2' }}
-  TENSORRT_LINUX_AARCH64_VERSION: ${{ inputs.tensorrt-linux-aarch64 || '10.16.1.11-1+cuda13.2' }}
-  PACKAGE_NAME: trt
+  CUDA_LINUX_VERSION: ${{ inputs.cuda-linux|| '13.2' }}
+  TENSORRT_RTX_WINDOWS_VERSION: ${{ inputs.tensorrt-rtx-windows || '1.4.0.76' }}
+  TENSORRT_RTX_LINUX_VERSION: ${{ inputs.tensorrt-rtx-linux || '1.4.0.76' }}
+  PACKAGE_NAME: trt_rtx
 
 jobs:
   build-wheels:
@@ -83,12 +69,9 @@ jobs:
       matrix:
         include:
           - name: Linux x64
-            os: ubuntu-24.04
+            os: ubuntu-22.04
             cuda_repo: rhel8/x86_64
             container: quay.io/pypa/manylinux_2_28_x86_64
-          - name: Linux ARM64
-            os: ubuntu-24.04-arm
-            cuda_repo: ubuntu2404/sbsa/
           - name: Windows x64
             os: windows-2025
 
@@ -135,57 +118,30 @@ jobs:
             nvptxcompiler
           cache-key: ${{ matrix.os }}
 
-      - name: Setup TensorRT (Windows)
+      - name: Setup TensorRT RTX (Windows)
         if: runner.os == 'Windows'
-        uses: ./.github/actions/setup-tensorrt-windows
+        uses: ./.github/actions/setup-tensorrt-rtx-windows
         with:
-          tensorrt-version: ${{ env.TENSORRT_WINDOWS_VERSION }}
+          tensorrt-rtx-version: ${{ env.TENSORRT_RTX_WINDOWS_VERSION }}
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
-          cache-key: ${{ matrix.os }}
 
-      - name: Setup TensorRT (Linux x64)
+      - name: Setup TensorRT RTX (Linux x64)
         if: runner.os == 'Linux' && runner.arch == 'X64'
-        uses: ./.github/actions/setup-tensorrt-linux-x86-64
+        uses: ./.github/actions/setup-tensorrt-rtx-linux
         with:
-          tensorrt-version: ${{ env.TENSORRT_LINUX_VERSION }}
-          tensorrt-components: libnvinfer-devel, libnvinfer-plugin-devel, libnvinfer-dispatch-devel, libnvinfer-lean-devel
+          tensorrt-rtx-version: ${{ env.TENSORRT_RTX_LINUX_VERSION }}
           cuda-repo: ${{ matrix.cuda_repo }}
-          cuda-version: ${{ env.CUDA_LINUX_x86_64_VERSION }}
-          cuda-components: >-
-            cuda-nvcc,
-            cuda-cudart-devel,
-            cuda-driver-devel,
-            cuda-profiler-api
-
-      - name: Setup TensorRT (Linux ARM64)
-        if: runner.os == 'Linux' && runner.arch == 'ARM64'
-        uses: ./.github/actions/setup-tensorrt-linux-aarch64
-        with:
-          tensorrt-version: ${{ env.TENSORRT_LINUX_AARCH64_VERSION }}
-          tensorrt-components: libnvinfer-dev, libnvinfer-plugin-dev, libnvinfer-dispatch-dev, libnvinfer-lean-dev
-          cuda-repo: ${{ matrix.cuda_repo }}
-          cuda-version: ${{ env.CUDA_LINUX_x86_64_VERSION }}
-          cuda-components: >-
-            cuda-nvcc,
-            cuda-cudart-dev,
-            cuda-driver-dev,
-            cuda-profiler-api
+          cuda-version: ${{ env.CUDA_LINUX_VERSION }}
 
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX: ${{ inputs.version }}
 
       - name: Repair wheel (Linux)
         if: runner.os == 'Linux'
         run: |
-          uvx --with patchelf auditwheel repair \
-            --exclude libnvinfer.so.10 \
-            --exclude libnvinfer_plugin.so.10 \
-            --exclude libnvinfer_dispatch.so.10 \
-            --exclude libnvinfer_lean.so.10 \
-            --strip dist/*.whl \
-            -w repaired_wheels
+          uvx --with patchelf auditwheel repair --strip dist/*.whl -w repaired_wheels
           rm dist/*.whl
           mv repaired_wheels/*.whl dist/
 
@@ -218,7 +174,7 @@ jobs:
       - name: Build sdist
         run: uv build --sdist --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT: ${{ inputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX: ${{ inputs.version }}
 
       - name: Upload sdist
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -235,9 +191,9 @@ jobs:
             "package": "${{ env.PACKAGE_NAME }}",
             "version": "$VERSION",
             "cuda_windows": "${{ env.CUDA_WINDOWS_VERSION }}",
-            "cuda_linux": "${{ env.CUDA_LINUX_x86_64_VERSION }}",
-            "tensorrt_windows": "${{ env.TENSORRT_WINDOWS_VERSION }}",
-            "tensorrt_linux": "${{ env.TENSORRT_LINUX_VERSION }}"
+            "cuda_linux": "${{ env.CUDA_LINUX_VERSION }}",
+            "tensorrt_rtx_windows": "${{ env.TENSORRT_RTX_WINDOWS_VERSION }}",
+            "tensorrt_rtx_linux": "${{ env.TENSORRT_RTX_LINUX_VERSION }}"
           }
           EOF
 

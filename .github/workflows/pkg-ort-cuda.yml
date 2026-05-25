@@ -188,7 +188,7 @@ jobs:
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.name }}
+          name: ${{ env.PACKAGE_NAME }}-cuda-wheels-${{ matrix.name }}
           path: ./dist/*.whl
 
   build-sdist:
@@ -265,7 +265,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
         run: >-
-          gh workflow run publish.yml
+          gh workflow run cd-publish.yml
           -f artifact-pattern=${{ env.PACKAGE_NAME }}-cuda-*
           -f package=vapoursynth-mlrt-${{ env.PACKAGE_NAME }}-cuda
           -f packages-dir=dist

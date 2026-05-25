@@ -19,6 +19,8 @@ on:
       - .github/actions/setup-onnxruntime-*/**
       - .github/cmake-cache/onnx-*/**
       - .github/cmake-cache/onnxruntime-*/**
+  schedule:
+    - cron: 39 4 2-30/4 * *
   workflow_dispatch:
     inputs:
       publish:

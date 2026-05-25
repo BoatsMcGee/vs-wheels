@@ -19,6 +19,8 @@ on:
       - .github/actions/setup-openvino-*/**
       - .github/cmake-cache/onnx-*/**
       - .github/cmake-cache/openvino-*/**
+  schedule:
+    - cron: 23 3 1-30/4 * *
   workflow_dispatch:
     inputs:
       publish:

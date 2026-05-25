@@ -15,6 +15,8 @@ on:
       - .github/workflows/pkg-ncnn.yml
       - .github/actions/setup-onnx-*/**
       - .github/actions/setup-ncnn-*/**
+  schedule:
+    - cron: 17 4 4-30/4 * *
   workflow_dispatch:
     inputs:
       publish:

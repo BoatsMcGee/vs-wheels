@@ -36,6 +36,13 @@ runs:
       with:
         vulkan_version: ${{ inputs.vulkan-version }}
 
+    - name: Ensure Vulkan SDK libvulkan.so symlink exists
+      shell: bash
+      run: |
+        if [ -d "$VULKAN_SDK/lib/VulkanLoader/lib" ]; then
+          ln -sf "$VULKAN_SDK/lib/VulkanLoader/lib/libvulkan.so.1" "$VULKAN_SDK/lib/libvulkan.so"
+        fi
+
     - name: Install dependencies
       shell: bash
       run: |
@@ -80,6 +87,7 @@ runs:
       run: |
         ncnnRoot=$(realpath ncnn-dist)
         echo "CMAKE_PREFIX_PATH=$ncnnRoot${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
+        echo "SKBUILD_CMAKE_DEFINE=Vulkan_LIBRARY=$VULKAN_SDK/lib/libvulkan.so" >> $GITHUB_ENV
 
     - name: Upload NCNN
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

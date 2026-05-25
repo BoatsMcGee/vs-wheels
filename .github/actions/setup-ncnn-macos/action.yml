@@ -83,8 +83,7 @@ runs:
 
         brew_prefix=$(brew --prefix libomp)
         echo "OpenMP_ROOT=$brew_prefix" >> $GITHUB_ENV
-        echo "SKBUILD_CMAKE_DEFINE_OpenMP_ROOT=$brew_prefix" >> $GITHUB_ENV
-        echo "SKBUILD_CMAKE_DEFINE_CMAKE_POLICY_DEFAULT_CMP0074=NEW" >> $GITHUB_ENV
+        echo "SKBUILD_CMAKE_DEFINE=OpenMP_ROOT=$brew_prefix" >> $GITHUB_ENV
 
     - name: Upload NCNN
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

@@ -24,8 +24,7 @@ set_target_properties(
 )
 
 target_include_directories(vsncnn PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}")
-target_link_libraries(vsncnn PRIVATE ncnn ONNX::onnx)
-target_link_libraries(vsncnn PRIVATE Vulkan::Vulkan)
+target_link_libraries(vsncnn PRIVATE ncnn ONNX::onnx Vulkan::Vulkan)
 
 if(APPLE)
   target_link_libraries(

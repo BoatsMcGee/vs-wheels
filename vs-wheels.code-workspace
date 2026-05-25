@@ -103,6 +103,7 @@
     "cmake.buildBeforeRun": false,
     "cmake.configureOnEdit": false,
     "cmake.configureOnOpen": false,
+    "cmake.ignoreCMakeListsMissing": true,
   },
   "extensions": {
     "recommendations": [

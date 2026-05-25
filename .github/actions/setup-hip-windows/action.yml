@@ -4,6 +4,10 @@ inputs:
   hip-version:
     description: "HIP version (e.g., 25.Q3-WinSvr2022, 26.Q1-Win11)"
     required: true
+  cache:
+    description: Whether to enable cache
+    required: false
+    default: "false"
   cache-key:
     description: "Extra cache key part"
     required: false
@@ -14,6 +18,7 @@ runs:
   steps:
     - name: Restore ROCm HIP
       id: cache-hip
+      if: inputs.cache != 'false'
       uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
         path: C:\Program Files\AMD\ROCM
@@ -32,7 +37,7 @@ runs:
         Start-Process hip_installer.exe -ArgumentList '-install' -NoNewWindow -Wait
 
     - name: Save ROCm HIP
-      if: steps.cache-hip.outputs.cache-hit != 'true'
+      if: inputs.cache != 'false' && steps.cache-hip.outputs.cache-hit != 'true'
       uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
       with:
         path: C:\Program Files\AMD\ROCM

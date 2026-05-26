@@ -10,8 +10,7 @@
     ":disableRateLimiting",
     ":semanticCommits",
     ":semanticCommitScopeDisabled",
-    ":semanticCommitTypeAll(deps)",
-    "docker:disable"
+    ":semanticCommitTypeAll(deps)"
   ],
   "git-submodules": {
     "enabled": true
@@ -44,6 +43,11 @@
     {
       "matchManagers": ["git-submodules"],
       "automerge": false
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["quay.io/pypa/manylinux_2_28_x86_64"],
+      "enabled": false
     }
   ]
 }

@@ -10,7 +10,8 @@
     ":disableRateLimiting",
     ":semanticCommits",
     ":semanticCommitScopeDisabled",
-    ":semanticCommitTypeAll(deps)"
+    ":semanticCommitTypeAll(deps)",
+    "docker:disable"
   ],
   "git-submodules": {
     "enabled": true

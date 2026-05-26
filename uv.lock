@@ -19,6 +19,7 @@ members = [
     "vapoursynth-dfttest2-hiprtc",
     "vapoursynth-dfttest2-nvrtc",
     "vapoursynth-fmtconv",
+    "vapoursynth-mlrt-migx",
     "vapoursynth-mlrt-ncnn",
     "vapoursynth-mlrt-ort",
     "vapoursynth-mlrt-ov",
@@ -1060,6 +1061,16 @@ dev = [
     { name = "hatchling", specifier = "==1.29.0" },
     { name = "packaging", specifier = "==26.2" },
 ]
+
+[[package]]
+name = "vapoursynth-mlrt-migx"
+source = { editable = "vsmlrt/migx" }
+dependencies = [
+    { name = "vapoursynth" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
 
 [[package]]
 name = "vapoursynth-mlrt-ncnn"

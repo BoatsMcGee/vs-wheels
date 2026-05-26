@@ -68,6 +68,10 @@
       "name": "VSMLRT TRT RTX",
       "path": "vsmlrt/trt_rtx",
     },
+    {
+      "name": "VSMLRT MIGX",
+      "path": "vsmlrt/migx",
+    },
   ],
   "settings": {
     "editor.formatOnSave": true,

@@ -56,6 +56,7 @@ members = [
     "vsmlrt/ov",
     "vsmlrt/trt",
     "vsmlrt/trt_rtx",
+    "vsmlrt/migx",
 ]
 
 [tool.mypy]

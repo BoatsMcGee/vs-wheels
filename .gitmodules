@@ -94,3 +94,6 @@
 [submodule "vsmlrt/trt_rtx/vapoursynth"]
 	path = vsmlrt/trt_rtx/vapoursynth
 	url = https://github.com/vapoursynth/vapoursynth/
+[submodule "vsmlrt/migx/vapoursynth"]
+	path = vsmlrt/migx/vapoursynth
+	url = https://github.com/vapoursynth/vapoursynth.git

@@ -58,9 +58,6 @@
 [submodule "dfttest2/dfttest2_cpu/vapoursynth"]
 	path = dfttest2/dfttest2_cpu/vapoursynth
 	url = https://github.com/vapoursynth/vapoursynth
-[submodule "vsmlrt/vsmlrt/vs-mlrt"]
-	path = vsmlrt/vsmlrt/vs-mlrt
-	url = https://github.com/AmusementClub/vs-mlrt/
 [submodule "vsmlrt/trt/vs-mlrt"]
 	path = vsmlrt/trt/vs-mlrt
 	url = https://github.com/AmusementClub/vs-mlrt/

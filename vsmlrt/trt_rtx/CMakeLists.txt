@@ -43,6 +43,14 @@ set_target_properties(
   PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
 )
 
+if(UNIX)
+  if(APPLE)
+    set_target_properties(vstrt_rtx PROPERTIES INSTALL_RPATH "@loader_path")
+  else()
+    set_target_properties(vstrt_rtx PROPERTIES INSTALL_RPATH "$ORIGIN")
+  endif()
+endif()
+
 target_include_directories(
   vstrt_rtx
   PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vstrt" "vs-mlrt/common" ${CUDAToolkit_INCLUDE_DIRS}
@@ -81,13 +89,37 @@ endif()
 # === Packaging & Installation ===
 install(TARGETS vstrt_rtx LIBRARY DESTINATION . RUNTIME DESTINATION .)
 
-# Helper runtime DLL copying/installing logic
+# Helper runtime DLL/SO copying/installing logic
 if(WIN32)
   file(GLOB _DLLS "${_TENSORRT_RTX_HOME}/bin/tensorrt_rtx${TENSORRT_RTX_LIBRARY_SUFFIX}.dll")
   if(_DLLS)
     install(FILES ${_DLLS} DESTINATION "vsmlrt-cuda")
   else()
     message(WARNING "Could not find TensorRT-RTX DLLs")
+  endif()
+else()
+  # Copy TensorRT RTX shared library on Linux.
+  # libtensorrt_rtx.so is dlopen'd at runtime and invisible to auditwheel.
+  if(DEFINED ENV{TENSORRT_RTX_HOME})
+    set(_TRT_RTX_LIB_PATHS "${_TENSORRT_RTX_HOME}/lib" "${_TENSORRT_RTX_HOME}/lib64")
+  else()
+    set(_TRT_RTX_LIB_PATHS "/usr/lib" "/usr/lib64" "/usr/lib/x86_64-linux-gnu")
+  endif()
+
+  set(_TRT_RTX_SEARCH_PATTERNS)
+  foreach(_PATH IN LISTS _TRT_RTX_LIB_PATHS)
+    list(APPEND _TRT_RTX_SEARCH_PATTERNS "${_PATH}/libtensorrt_rtx.so.${TRT_MAJOR_RTX}")
+  endforeach()
+
+  file(GLOB _LIBS ${_TRT_RTX_SEARCH_PATTERNS})
+  if(_LIBS)
+    foreach(_LIB IN LISTS _LIBS)
+      file(REAL_PATH "${_LIB}" _REAL_LIB)
+      get_filename_component(_LIB_NAME "${_LIB}" NAME)
+      install(FILES "${_REAL_LIB}" DESTINATION . RENAME "${_LIB_NAME}")
+    endforeach()
+  else()
+    message(WARNING "Could not find TensorRT RTX library (libtensorrt_rtx.so.${TRT_MAJOR_RTX})")
   endif()
 endif()
 

@@ -43,6 +43,8 @@ set_target_properties(
   PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
 )
 
+set_target_properties(vsmigx PROPERTIES INSTALL_RPATH "$ORIGIN")
+
 target_include_directories(
   vsmigx
   PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vsmigx"

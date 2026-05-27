@@ -38,7 +38,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: brew install protobuf libomp
+      run: brew install libomp
 
     - name: Checkout ncnn
       if: steps.cache-ncnn.outputs.cache-hit != 'true'

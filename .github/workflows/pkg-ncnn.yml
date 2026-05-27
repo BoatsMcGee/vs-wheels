@@ -111,6 +111,8 @@ jobs:
             os: windows-2025
           - name: macOS ARM64
             os: macos-15
+          - name: macOS x64
+            os: macos-15-intel
 
     name: Build wheels on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}

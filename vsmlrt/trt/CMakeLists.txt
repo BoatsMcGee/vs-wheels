@@ -35,6 +35,14 @@ set_target_properties(
   PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
 )
 
+if(UNIX)
+  if(APPLE)
+    set_target_properties(vstrt PROPERTIES INSTALL_RPATH "@loader_path")
+  else()
+    set_target_properties(vstrt PROPERTIES INSTALL_RPATH "$ORIGIN")
+  endif()
+endif()
+
 target_include_directories(
   vstrt
   PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vstrt" "vs-mlrt/common" ${CUDAToolkit_INCLUDE_DIRS}

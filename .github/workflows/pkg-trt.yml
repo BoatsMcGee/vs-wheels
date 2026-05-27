@@ -55,7 +55,7 @@ on:
         description: TensorRT version for Windows (https://developer.nvidia.com/tensorrt/download/)
         type: string
         required: false
-        default: "10.16.1.11.cuda13.2"
+        default: "10.16.1.11"
       tensorrt-linux:
         description: TensorRT version for Linux x86_64 (https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/)
         type: string
@@ -71,7 +71,7 @@ env:
   CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '13.2.1' }}
   CUDA_LINUX_x86_64_VERSION: ${{ inputs.cuda-linux-x86-64 || '13.2' }}
   CUDA_LINUX_AARCH64_VERSION: ${{ inputs.cuda-linux-aarch64 || '13.2' }}
-  TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '10.16.1.11.cuda13.2' }}
+  TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '10.16.1.11' }}
   TENSORRT_LINUX_VERSION: ${{ inputs.tensorrt-linux || '10.16.1.11-1.cuda13.2' }}
   TENSORRT_LINUX_AARCH64_VERSION: ${{ inputs.tensorrt-linux-aarch64 || '10.16.1.11-1+cuda13.2' }}
   PACKAGE_NAME: trt
@@ -194,10 +194,10 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           uvx --with patchelf auditwheel repair \
-            --exclude libnvinfer.so.10 \
-            --exclude libnvinfer_plugin.so.10 \
-            --exclude libnvinfer_dispatch.so.10 \
-            --exclude libnvinfer_lean.so.10 \
+            --exclude libnvinfer.so.* \
+            --exclude libnvinfer_plugin.so.* \
+            --exclude libnvinfer_dispatch.so.* \
+            --exclude libnvinfer_lean.so.* \
             --strip dist/*.whl \
             -w repaired_wheels
           rm dist/*.whl

@@ -148,7 +148,14 @@ jobs:
         uses: ./.github/actions/setup-tensorrt-linux-x86-64
         with:
           tensorrt-version: ${{ env.TENSORRT_LINUX_VERSION }}
-          tensorrt-components: libnvinfer-devel, libnvinfer-plugin-devel, libnvinfer-dispatch-devel, libnvinfer-lean-devel
+          tensorrt-components: >-
+            libnvinfer-devel,
+            libnvinfer-plugin-devel,
+            libnvinfer-dispatch-devel,
+            libnvinfer-lean-devel,
+            libnvinfer-headers-devel,
+            libnvinfer-safe-headers-devel,
+            libnvinfer-headers-plugin-devel
           cuda-repo: ${{ matrix.cuda_repo }}
           cuda-version: ${{ env.CUDA_LINUX_x86_64_VERSION }}
           cuda-components: >-
@@ -162,7 +169,14 @@ jobs:
         uses: ./.github/actions/setup-tensorrt-linux-aarch64
         with:
           tensorrt-version: ${{ env.TENSORRT_LINUX_AARCH64_VERSION }}
-          tensorrt-components: libnvinfer-dev, libnvinfer-plugin-dev, libnvinfer-dispatch-dev, libnvinfer-lean-dev
+          tensorrt-components: >-
+            libnvinfer-dev,
+            libnvinfer-plugin-dev,
+            libnvinfer-dispatch-dev,
+            libnvinfer-lean-dev,
+            libnvinfer-headers-dev,
+            libnvinfer-safe-headers-dev,
+            libnvinfer-headers-plugin-dev
           cuda-repo: ${{ matrix.cuda_repo }}
           cuda-version: ${{ env.CUDA_LINUX_x86_64_VERSION }}
           cuda-components: >-

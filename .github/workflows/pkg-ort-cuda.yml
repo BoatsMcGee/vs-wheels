@@ -181,7 +181,11 @@ jobs:
       - name: Repair wheel (Linux)
         if: runner.os == 'Linux'
         run: |
-          uvx --with patchelf auditwheel repair --strip dist/*.whl -w repaired_wheels
+          uvx --with patchelf auditwheel repair \
+            --exclude libonnxruntime_providers_cuda.so.* \
+            --exclude libonnxruntime_providers_shared.so.* \
+            --strip dist/*.whl \
+            -w repaired_wheels
           rm dist/*.whl
           mv repaired_wheels/*.whl dist/
 

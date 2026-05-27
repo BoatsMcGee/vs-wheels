@@ -19,6 +19,19 @@ set(ENABLE_HIP OFF CACHE BOOL "" FORCE)
 # Add the submodule but skip its internal install rules
 add_subdirectory(vs-dfttest2 EXCLUDE_FROM_ALL)
 
+# Post-process the submodule targets to fix Linux driver initialization
+if(UNIX)
+  find_package(CUDAToolkit REQUIRED)
+  execute_process(
+    COMMAND
+      ${CMAKE_COMMAND} -E create_symlink "${CUDAToolkit_LIBRARY_DIR}/stubs/libcuda.so"
+      "${CMAKE_CURRENT_BINARY_DIR}/libcuda.so.1"
+  )
+
+  target_link_directories(dfttest2_cuda PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+  target_link_libraries(dfttest2_cuda PRIVATE :libcuda.so.1)
+endif()
+
 if(WIN32 AND ENABLE_CUDA)
   find_package(CUDAToolkit QUIET)
   file(GLOB CUFFT_DLL "${CUDAToolkit_BIN_DIR}/x64/cufft64_*.dll")

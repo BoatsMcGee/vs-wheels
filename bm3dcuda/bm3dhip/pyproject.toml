@@ -54,6 +54,7 @@ inherit.cmake.define = "append"
 cmake.define.CMAKE_MSVC_RUNTIME_LIBRARY = "MultiThreaded"
 cmake.define.HIP_PLATFORM = "amd"
 cmake.define.GPU_TARGETS = "gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1102;gfx1151;gfx1200;gfx1201"
+cmake.define.CMAKE_CXX_FLAGS = "-Wall -ffast-math -Rpass-analysis=kernel-resource-usage -Xclang -fno-cuda-host-device-constexpr"
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "linux"

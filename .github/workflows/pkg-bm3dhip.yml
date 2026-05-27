@@ -70,7 +70,7 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
             container: quay.io/pypa/manylinux_2_28_x86_64
-          - os: ${{ inputs.windows-runner || 'windows-2022' }}
+          - os: ${{ inputs.windows-runner || 'windows-2025-vs2026' }}
             arch: amd64
 
     name: Build wheels on ${{ matrix.os }}

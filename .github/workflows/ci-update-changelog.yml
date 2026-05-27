@@ -18,21 +18,10 @@ jobs:
           fetch-depth: 0
 
       - name: Download metadata artifacts
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p metadata_files
-
-          # Dynamically get all plugin workflows
-          WORKFLOWS=($(ls .github/workflows/pkg-*.yml | xargs -n 1 basename))
-
-          for WF in "${WORKFLOWS[@]}"; do
-            RUN_ID=$(gh run list --workflow "$WF" --status success --limit 1 --json databaseId -q '.[0].databaseId')
-
-            if [ -n "$RUN_ID" ] && [ "$RUN_ID" != "null" ]; then
-              gh run download "$RUN_ID" --pattern "*-metadata" -D metadata_files/ || echo "No metadata found for $WF"
-            fi
-          done
+        run: ./scripts/Download-Metadata.ps1
 
       - name: Merge JSONs and Generate Markdown
         run: python scripts/generate_changelog.py

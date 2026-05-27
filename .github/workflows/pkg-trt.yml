@@ -241,7 +241,7 @@ jobs:
           path: dist/*.tar.gz
 
       - name: Generate metadata
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.repository == 'pypi'
         run: |
           VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
           cat << EOF > metadata.json
@@ -256,7 +256,7 @@ jobs:
           EOF
 
       - name: Upload metadata
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.repository == 'pypi'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.PACKAGE_NAME }}-metadata

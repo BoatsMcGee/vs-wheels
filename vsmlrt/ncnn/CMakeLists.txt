@@ -1,6 +1,38 @@
 cmake_minimum_required(VERSION 3.22)
 project(VSNCNN_Package)
 
+# === Apply patches ===
+find_package(Git REQUIRED)
+
+set(VSNCNN_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt/vsncnn")
+set(
+  PATCH_FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/patches/missing-kernel-shape.patch"
+  "${CMAKE_CURRENT_SOURCE_DIR}/patches/segfault-asymmetrical-formats.patch"
+)
+
+foreach(PATCH_FILE IN LISTS PATCH_FILES)
+  cmake_path(GET PATCH_FILE FILENAME PATCH_NAME)
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} apply --check "${PATCH_FILE}"
+    WORKING_DIRECTORY "${VSNCNN_SRC_DIR}"
+    RESULT_VARIABLE PATCH_CAN_BE_APPLIED
+    OUTPUT_QUIET
+    ERROR_QUIET
+  )
+
+  if(PATCH_CAN_BE_APPLIED EQUAL 0)
+    message(STATUS "Applying patch: ${PATCH_NAME}")
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} apply "${PATCH_FILE}"
+      WORKING_DIRECTORY "${VSNCNN_SRC_DIR}"
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+  else()
+    message(STATUS "Patch already applied or skipped: ${PATCH_NAME}")
+  endif()
+endforeach()
+
 # === C++ Standard & Options ===
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

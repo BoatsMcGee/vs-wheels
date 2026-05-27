@@ -4,7 +4,7 @@ project(VSNCNN_Package)
 # === Apply patches ===
 find_package(Git REQUIRED)
 
-set(VSNCNN_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt/vsncnn")
+set(VSNCNN_SUBMODULE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt")
 set(
   PATCH_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/patches/missing-kernel-shape.patch"
@@ -15,7 +15,7 @@ foreach(PATCH_FILE IN LISTS PATCH_FILES)
   cmake_path(GET PATCH_FILE FILENAME PATCH_NAME)
   execute_process(
     COMMAND ${GIT_EXECUTABLE} apply --check "${PATCH_FILE}"
-    WORKING_DIRECTORY "${VSNCNN_SRC_DIR}"
+    WORKING_DIRECTORY "${VSNCNN_SUBMODULE_DIR}"
     RESULT_VARIABLE PATCH_CAN_BE_APPLIED
     OUTPUT_QUIET
     ERROR_QUIET
@@ -25,7 +25,7 @@ foreach(PATCH_FILE IN LISTS PATCH_FILES)
     message(STATUS "Applying patch: ${PATCH_NAME}")
     execute_process(
       COMMAND ${GIT_EXECUTABLE} apply "${PATCH_FILE}"
-      WORKING_DIRECTORY "${VSNCNN_SRC_DIR}"
+      WORKING_DIRECTORY "${VSNCNN_SUBMODULE_DIR}"
       COMMAND_ERROR_IS_FATAL ANY
     )
   else()

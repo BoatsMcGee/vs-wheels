@@ -15,19 +15,19 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Define cache key
-      id: cache-key
-      shell: pwsh
-      run: |
-        "key=setup-trt-windows-${{ runner.os }}-${{ inputs.tensorrt-version }}-${{ inputs.cache-key }}" `
-          | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+    # - name: Define cache key
+    #   id: cache-key
+    #   shell: pwsh
+    #   run: |
+    #     "key=setup-trt-windows-${{ runner.os }}-${{ inputs.tensorrt-version }}-${{ inputs.cache-key }}" `
+    #       | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-    - name: Restore TensorRT
-      id: cache-trt
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-      with:
-        path: tensorrt
-        key: ${{ steps.cache-key.outputs.key }}
+    # - name: Restore TensorRT
+    #   id: cache-trt
+    #   uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+    #   with:
+    #     path: tensorrt
+    #     key: ${{ steps.cache-key.outputs.key }}
 
     - name: Download TensorRT
       if: steps.cache-trt.outputs.cache-hit != 'true'
@@ -57,12 +57,12 @@ runs:
         Move-Item -Path $extractedFolder -Destination "tensorrt"
         Remove-Item -Path trt.zip -Force
 
-    - name: Save TensorRT
-      if: steps.cache-trt.outputs.cache-hit != 'true'
-      uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-      with:
-        path: tensorrt
-        key: ${{ steps.cache-key.outputs.key }}
+    # - name: Save TensorRT
+    #   if: steps.cache-trt.outputs.cache-hit != 'true'
+    #   uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+    #   with:
+    #     path: tensorrt
+    #     key: ${{ steps.cache-key.outputs.key }}
 
     - name: Configure TensorRT Paths
       shell: pwsh

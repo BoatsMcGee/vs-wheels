@@ -48,18 +48,18 @@ on:
         description: TensorRT version for Windows (https://developer.nvidia.com/tensorrt-rtx)
         type: string
         required: false
-        default: "1.4.0.76"
+        default: "1.5.0.114"
       tensorrt-rtx-linux:
         description: TensorRT version for Linux x86_64 (https://developer.nvidia.com/tensorrt-rtx)
         type: string
         required: false
-        default: "1.4.0.76"
+        default: "1.5.0.114"
 
 env:
   CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '13.2.1' }}
   CUDA_LINUX_VERSION: ${{ inputs.cuda-linux|| '13.2' }}
-  TENSORRT_RTX_WINDOWS_VERSION: ${{ inputs.tensorrt-rtx-windows || '1.4.0.76' }}
-  TENSORRT_RTX_LINUX_VERSION: ${{ inputs.tensorrt-rtx-linux || '1.4.0.76' }}
+  TENSORRT_RTX_WINDOWS_VERSION: ${{ inputs.tensorrt-rtx-windows || '1.5.0.114' }}
+  TENSORRT_RTX_LINUX_VERSION: ${{ inputs.tensorrt-rtx-linux || '1.5.0.114' }}
   PACKAGE_NAME: trt_rtx
 
 jobs:
@@ -70,10 +70,14 @@ jobs:
         include:
           - name: Linux x64
             os: ubuntu-22.04
-            cuda_repo: rhel8/x86_64
+            cuda-repo: rhel8/x86_64
             container: quay.io/pypa/manylinux_2_28_x86_64
+          - name: Linux ARM64
+            os: ubuntu-24.04-arm
+            cuda-repo: rhel10/sbsa
+            container: quay.io/pypa/manylinux_2_39_aarch64
           - name: Windows x64
-            os: windows-2025
+            os: windows-2025-vs2026
 
     name: Build wheels on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -125,12 +129,12 @@ jobs:
           tensorrt-rtx-version: ${{ env.TENSORRT_RTX_WINDOWS_VERSION }}
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
 
-      - name: Setup TensorRT RTX (Linux x64)
-        if: runner.os == 'Linux' && runner.arch == 'X64'
+      - name: Setup TensorRT RTX (Linux)
+        if: runner.os == 'Linux'
         uses: ./.github/actions/setup-tensorrt-rtx-linux
         with:
           tensorrt-rtx-version: ${{ env.TENSORRT_RTX_LINUX_VERSION }}
-          cuda-repo: ${{ matrix.cuda_repo }}
+          cuda-repo: ${{ matrix.cuda-repo }}
           cuda-version: ${{ env.CUDA_LINUX_VERSION }}
 
       - name: Build wheel

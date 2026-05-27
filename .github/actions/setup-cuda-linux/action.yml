@@ -18,9 +18,12 @@ runs:
       shell: bash
       run: |
         CUDA_VER="${{ inputs.cuda-version }}"
+        CUDA_REPO="${{ inputs.cuda-repo }}"
         CUDA_DASH=${CUDA_VER//./-}
+        CUDA_REPO_ARR=(${CUDA_REPO//// })
+        CUDA_REPO_VER=${CUDA_REPO_ARR[0]}
         dnf install -y 'dnf-command(config-manager)'
-        dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/${{ inputs.cuda-repo }}/cuda-rhel8.repo
+        dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_REPO}/cuda-${CUDA_REPO_VER}.repo
         dnf clean all
         IFS=', ' read -ra ADDR <<< "${{ inputs.cuda-components }}"
         PKG_LIST=""

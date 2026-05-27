@@ -38,15 +38,30 @@ runs:
         IFS='.' read -ra cuda_parts <<< "$CUDA_VER"
         cuda_ver="${cuda_parts[0]}.${cuda_parts[1]}"
 
-        URL="https://developer.nvidia.com/downloads/trt/rtx_sdk/secure/${short_trt_rtx_ver}/TensorRT-RTX-${full_trt_rtx_ver}-Linux-x86_64-cuda-${cuda_ver}-Release-external.tar.gz"
+        major="${trt_parts[0]}"
+        minor="${trt_parts[1]}"
+        # Tarball extension changed starting from TensorRT RTX 1.5.0
+        if [ "$major" -gt 1 ] || { [ "$major" -eq 1 ] && [ "$minor" -ge 5 ]; }; then
+          EXT="tar.zst"
+        else
+          EXT="tar.gz"
+        fi
+
+        ARCH=$(uname -m)
+        URL="https://developer.nvidia.com/downloads/trt/rtx_sdk/secure/${short_trt_rtx_ver}/TensorRT-RTX-${full_trt_rtx_ver}-Linux-${ARCH}-cuda-${cuda_ver}-Release-external.${EXT}"
         echo "Downloading TensorRT RTX from $URL"
-        curl -L -o trt.tar.gz "$URL"
+        curl -L -o "trt.${EXT}" "$URL"
 
         echo "Extracting TensorRT RTX..."
-        tar -xzf trt.tar.gz
+        if [ "$EXT" = "tar.zst" ]; then
+          dnf install -y zstd
+          tar -I zstd -xf trt.tar.zst
+        else
+          tar -xzf trt.tar.gz
+        fi
         extracted_folder=$(find . -maxdepth 1 -type d -name "TensorRT-RTX-*" | head -n 1)
         mv "$extracted_folder" tensorrt-rtx
-        rm trt.tar.gz
+        rm "trt.${EXT}"
 
     - name: Configure TensorRT Paths
       shell: bash

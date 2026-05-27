@@ -6,19 +6,38 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# TensorRT RTX library suffix options
-set(TENSORRT_RTX_LIBRARY_SUFFIX "" CACHE STRING "TensorRT library suffix")
-if(WIN32 AND NOT TENSORRT_RTX_LIBRARY_SUFFIX)
-  set(TENSORRT_RTX_LIBRARY_SUFFIX "_1_4")
+# === TensorRT RTX Version Detection ===
+find_path(
+  TENSORRT_RTX_INCLUDE_DIR
+  NvInferVersion.h
+  HINTS "${TENSORRT_RTX_HOME}/include" "$ENV{TENSORRT_RTX_HOME}/include"
+  PATHS "/usr/include" "/usr/local/include"
+)
+
+if(TENSORRT_RTX_INCLUDE_DIR)
+  get_filename_component(_TENSORRT_RTX_HOME "${TENSORRT_RTX_INCLUDE_DIR}" DIRECTORY)
+  file(READ "${TENSORRT_RTX_INCLUDE_DIR}/NvInferVersion.h" _VERSION_CONTENT)
+  if(_VERSION_CONTENT MATCHES "#define TRT_MAJOR_RTX ([0-9]+)")
+    set(TRT_MAJOR_RTX "${CMAKE_MATCH_1}")
+  endif()
+  if(_VERSION_CONTENT MATCHES "#define TRT_MINOR_RTX ([0-9]+)")
+    set(TRT_MINOR_RTX "${CMAKE_MATCH_1}")
+  endif()
 endif()
 
-if(TENSORRT_RTX_LIBRARY_SUFFIX MATCHES "^_([0-9]+)_([0-9]+)")
-  set(TRT_MAJOR_RTX "${CMAKE_MATCH_1}")
-  set(TRT_MINOR_RTX "${CMAKE_MATCH_2}")
-else()
-  set(TRT_MAJOR_RTX "1")
-  set(TRT_MINOR_RTX "4")
+if(NOT TRT_MAJOR_RTX OR NOT TRT_MINOR_RTX)
+  message(
+    FATAL_ERROR
+    "Could not find or parse TensorRT RTX version from NvInferVersion.h (TENSORRT_RTX_HOME: ${TENSORRT_RTX_HOME}, ENV: $ENV{TENSORRT_RTX_HOME})"
+  )
 endif()
+
+set(TENSORRT_RTX_LIBRARY_SUFFIX "" CACHE STRING "TensorRT library suffix")
+if(WIN32 AND NOT TENSORRT_RTX_LIBRARY_SUFFIX)
+  set(TENSORRT_RTX_LIBRARY_SUFFIX "_${TRT_MAJOR_RTX}_${TRT_MINOR_RTX}")
+endif()
+
+message(STATUS "TensorRT RTX Version inferred: ${TRT_MAJOR_RTX}.${TRT_MINOR_RTX}")
 
 set(
   VAPOURSYNTH_INCLUDE_DIRECTORY
@@ -68,14 +87,9 @@ configure_file(vs-mlrt/vstrt/config.h.in config.h)
 target_link_libraries(vstrt_rtx PRIVATE CUDA::cudart_static)
 
 # Configure TensorRT RTX home directory & paths
-if(DEFINED ENV{TENSORRT_RTX_HOME})
-  file(TO_CMAKE_PATH "$ENV{TENSORRT_RTX_HOME}" _TENSORRT_RTX_HOME)
-  target_include_directories(vstrt_rtx PRIVATE "${_TENSORRT_RTX_HOME}/include")
-  target_link_directories(vstrt_rtx PRIVATE "${_TENSORRT_RTX_HOME}/lib")
-  message(STATUS "Using TENSORRT_RTX_HOME: ${_TENSORRT_RTX_HOME}")
-else()
-  message(WARNING "TENSORRT_RTX_HOME not set")
-endif()
+target_include_directories(vstrt_rtx PRIVATE "${_TENSORRT_RTX_HOME}/include")
+target_link_directories(vstrt_rtx PRIVATE "${_TENSORRT_RTX_HOME}/lib")
+message(STATUS "Using TENSORRT_RTX_HOME: ${_TENSORRT_RTX_HOME}")
 
 if(WIN32)
   target_link_libraries(vstrt_rtx PRIVATE "tensorrt_rtx${TENSORRT_RTX_LIBRARY_SUFFIX}")
@@ -100,7 +114,7 @@ if(WIN32)
 else()
   # Copy TensorRT RTX shared library on Linux.
   # libtensorrt_rtx.so is dlopen'd at runtime and invisible to auditwheel.
-  if(DEFINED ENV{TENSORRT_RTX_HOME})
+  if(_TENSORRT_RTX_HOME)
     set(_TRT_RTX_LIB_PATHS "${_TENSORRT_RTX_HOME}/lib" "${_TENSORRT_RTX_HOME}/lib64")
   else()
     set(_TRT_RTX_LIB_PATHS "/usr/lib" "/usr/lib64" "/usr/lib/x86_64-linux-gnu")

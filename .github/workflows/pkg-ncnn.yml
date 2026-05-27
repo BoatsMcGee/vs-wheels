@@ -55,17 +55,17 @@ on:
         description: NCNN tag for Windows (https://github.com/Tencent/ncnn)
         type: string
         required: false
-        default: "20260113"
+        default: "20260526"
       ncnn-linux-tag:
         description: NCNN tag for Linux (https://github.com/Tencent/ncnn)
         type: string
         required: false
-        default: "20260113"
+        default: "20260526"
       ncnn-macOS-tag:
         description: NCNN tag for macOS (https://github.com/Tencent/ncnn)
         type: string
         required: false
-        default: "20260113"
+        default: "20260526"
       vulkan-windows-version:
         description: Vulkan version for Windows (https://vulkan.lunarg.com/sdk/home)
         type: string
@@ -89,9 +89,9 @@ env:
   ONNX_WINDOWS_TAG: ${{ inputs.onnx-windows-tag || 'v1.21.0' }}
   ONNX_LINUX_TAG: ${{ inputs.onnx-linux-tag || 'v1.21.0' }}
   ONNX_MACOS_TAG: ${{ inputs.onnx-macos-tag || 'v1.21.0' }}
-  NCNN_WINDOWS_TAG: ${{ inputs.ncnn-windows-tag || '20260113' }}
-  NCNN_LINUX_TAG: ${{ inputs.ncnn-linux-tag || '20260113' }}
-  NCNN_MACOS_TAG: ${{ inputs.ncnn-macos-tag || '20260113' }}
+  NCNN_WINDOWS_TAG: ${{ inputs.ncnn-windows-tag || '20260526' }}
+  NCNN_LINUX_TAG: ${{ inputs.ncnn-linux-tag || '20260526' }}
+  NCNN_MACOS_TAG: ${{ inputs.ncnn-macos-tag || '20260526' }}
   VULKAN_WINDOWS_VERSION: ${{ inputs.vulkan-windows-version || '1.4.350.0' }}
   VULKAN_LINUX_VERSION: ${{ inputs.vulkan-linux-version || '1.4.350.1' }}
   VULKAN_MACOS_VERSION: ${{ inputs.vulkan-macos-version || '1.4.350.0' }}

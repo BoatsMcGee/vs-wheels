@@ -196,10 +196,12 @@ jobs:
       - name: Repair wheel (macOS)
         if: runner.os == 'macOS'
         run: |
-          uvx --from delocate delocate-wheel -v dist/*.whl -w repaired_wheels
+          uv tool install delocate
+          echo "Dependencies of wheel before repair:" && delocate-listdeps dist/*.whl
+          delocate-wheel -v --exclude libvulkan dist/*.whl -w repaired_wheels
           rm dist/*.whl
           mv repaired_wheels/*.whl dist/
-          uvx --from delocate delocate-listdeps dist/*.whl
+          echo "Dependencies of wheel after repair:" && delocate-listdeps dist/*.whl
 
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

@@ -41,6 +41,14 @@ set_target_properties(
   PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_EXTENSIONS OFF CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
 )
 
+if(UNIX)
+  if(APPLE)
+    set_target_properties(vsov PROPERTIES INSTALL_RPATH "@loader_path")
+  else()
+    set_target_properties(vsov PROPERTIES INSTALL_RPATH "$ORIGIN")
+  endif()
+endif()
+
 target_include_directories(
   vsov
   PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" "vs-mlrt/vsov" "vs-mlrt/common"
@@ -109,7 +117,59 @@ else()
     "${OpenVINO_DIR}/../lib/arm64/Release/*.dylib"
   )
   if(_LIBS)
-    install(FILES ${_LIBS} DESTINATION ".")
+    set(
+      _SKIP_NAMES
+      "libopenvino.so"
+      "libopenvino_c.so"
+      "libopenvino_onnx_frontend.so"
+      "libopenvino.dylib"
+      "libopenvino_c.dylib"
+      "libopenvino_onnx_frontend.dylib"
+    )
+    foreach(_LIB IN LISTS _LIBS)
+      get_filename_component(_LIB_NAME "${_LIB}" NAME)
+
+      # Skip link-time names (which are duplicates of SONAME libraries)
+      if(_LIB_NAME IN_LIST _SKIP_NAMES)
+        continue()
+      endif()
+
+      # Skip full version files to avoid duplicates (e.g. libopenvino.so.2026.1.0)
+      if(_LIB_NAME MATCHES "\\.so\\.[0-9]+\\.[0-9]+" OR _LIB_NAME MATCHES "\\.[0-9]+\\.[0-9]+\\.dylib")
+        continue()
+      endif()
+
+      file(REAL_PATH "${_LIB}" _REAL_LIB)
+      install(FILES "${_REAL_LIB}" DESTINATION . RENAME "${_LIB_NAME}")
+
+      if(APPLE)
+        # Fix install name ID of the library itself
+        install(
+          CODE
+            "
+          execute_process(
+            COMMAND install_name_tool -id \"@rpath/${_LIB_NAME}\" \"\${CMAKE_INSTALL_PREFIX}/${_LIB_NAME}\"
+          )
+        "
+        )
+        # Fix references to this library in other libraries/plugins
+        foreach(_DEP IN LISTS _LIBS "vsov")
+          if(_DEP STREQUAL "vsov")
+            set(_DEP_NAME "libvsov.dylib")
+          else()
+            get_filename_component(_DEP_NAME "${_DEP}" NAME)
+          endif()
+          install(
+            CODE
+              "
+            execute_process(
+              COMMAND install_name_tool -change \"${_REAL_LIB}\" \"@rpath/${_LIB_NAME}\" \"\${CMAKE_INSTALL_PREFIX}/${_DEP_NAME}\"
+            )
+          "
+          )
+        endforeach()
+      endif()
+    endforeach()
   else()
     message(WARNING "Could not find OpenVINO libraries/plugins")
   endif()

@@ -2,36 +2,21 @@ cmake_minimum_required(VERSION 3.22)
 project(VSNCNN_Package)
 
 # === Apply patches ===
-find_package(Git REQUIRED)
+include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
 
-set(VSNCNN_SUBMODULE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt")
-set(
-  PATCH_FILES
+set(SRC_VSNCNN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt")
+set(BIN_VSNCNN_DIR "${CMAKE_CURRENT_BINARY_DIR}/vs-mlrt")
+
+add_patched_source(
+  PATCHED_ONNX2NCNN
+  "${SRC_VSNCNN_DIR}/vsncnn/onnx2ncnn.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/patches/missing-kernel-shape.patch"
+)
+add_patched_source(
+  PATCHED_VS_NCNN
+  "${SRC_VSNCNN_DIR}/vsncnn/vs_ncnn.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/patches/segfault-asymmetrical-formats.patch"
 )
-
-foreach(PATCH_FILE IN LISTS PATCH_FILES)
-  cmake_path(GET PATCH_FILE FILENAME PATCH_NAME)
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} apply --check "${PATCH_FILE}"
-    WORKING_DIRECTORY "${VSNCNN_SUBMODULE_DIR}"
-    RESULT_VARIABLE PATCH_CAN_BE_APPLIED
-    OUTPUT_QUIET
-    ERROR_QUIET
-  )
-
-  if(PATCH_CAN_BE_APPLIED EQUAL 0)
-    message(STATUS "Applying patch: ${PATCH_NAME}")
-    execute_process(
-      COMMAND ${GIT_EXECUTABLE} apply "${PATCH_FILE}"
-      WORKING_DIRECTORY "${VSNCNN_SUBMODULE_DIR}"
-      COMMAND_ERROR_IS_FATAL ANY
-    )
-  else()
-    message(STATUS "Patch already applied or skipped: ${PATCH_NAME}")
-  endif()
-endforeach()
 
 # === C++ Standard & Options ===
 set(CMAKE_CXX_STANDARD 20)
@@ -57,7 +42,7 @@ find_package(ONNX REQUIRED)
 find_package(Vulkan REQUIRED)
 
 # === Target Definition & Configuration ===
-add_library(vsncnn SHARED vs-mlrt/vsncnn/vs_ncnn.cpp vs-mlrt/vsncnn/onnx2ncnn.cpp vs-mlrt/common/onnx_utils.cpp)
+add_library(vsncnn SHARED "${PATCHED_VS_NCNN}" "${PATCHED_ONNX2NCNN}" "${SRC_VSNCNN_DIR}/common/onnx_utils.cpp")
 
 set_target_properties(
   vsncnn
@@ -72,7 +57,14 @@ if(UNIX)
   endif()
 endif()
 
-target_include_directories(vsncnn PRIVATE "${VAPOURSYNTH_INCLUDE_DIRECTORY}" PUBLIC "${PROJECT_BINARY_DIR}")
+target_include_directories(
+  vsncnn
+  PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt/vsncnn"
+    "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt/common"
+    "${VAPOURSYNTH_INCLUDE_DIRECTORY}"
+  PUBLIC "${PROJECT_BINARY_DIR}"
+)
 
 configure_file(vs-mlrt/vsncnn/config.h.in config.h)
 

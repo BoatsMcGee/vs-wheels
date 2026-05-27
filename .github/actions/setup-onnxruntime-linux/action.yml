@@ -1,6 +1,9 @@
 name: Setup ONNX Runtime (Linux)
 description: Compiles ONNX Runtime from source on Linux (RHEL/Manylinux)
 inputs:
+  os:
+    description: The OS runner name (e.g. ubuntu-22.04)
+    required: true
   onnxruntime-tag:
     description: The Git tag or commit hash of ONNX Runtime to build
     required: true
@@ -51,7 +54,7 @@ runs:
             '.github/cmake-cache/onnxruntime-aarch64.cmake'
           ) }}"
         fi
-        echo "key=setup-onnxruntime-${RUNNER_OS}-${ARCH}-${{ inputs.onnxruntime-tag }}-${CUDA_PART}-${HASH}" >> $GITHUB_OUTPUT
+        echo "key=setup-onnxruntime-${{ inputs.os }}-${ARCH}-${{ inputs.onnxruntime-tag }}-${CUDA_PART}-${HASH}" >> $GITHUB_OUTPUT
         echo "arch_file=$ARCH_FILE" >> $GITHUB_OUTPUT
 
     - name: Restore ONNX Runtime

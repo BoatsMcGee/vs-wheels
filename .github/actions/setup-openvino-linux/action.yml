@@ -1,6 +1,9 @@
 name: Setup OpenVINO (Linux)
 description: Compiles OpenVINO from source on Linux
 inputs:
+  os:
+    description: The OS runner name (e.g. ubuntu-22.04)
+    required: true
   openvino-tag:
     description: The Git tag or commit hash of OpenVINO to build
     required: true
@@ -25,7 +28,7 @@ runs:
           '.github/cmake-cache/openvino-x64.cmake',
           '.github/cmake-cache/openvino-aarch64.cmake'
         ) }}"
-        echo "key=setup-openvino-${RUNNER_OS}-${ARCH}-${{ inputs.openvino-tag }}-${HASH}" >> $GITHUB_OUTPUT
+        echo "key=setup-openvino-${{ inputs.os }}-${ARCH}-${{ inputs.openvino-tag }}-${HASH}" >> $GITHUB_OUTPUT
         echo "arch_file=$ARCH_FILE" >> $GITHUB_OUTPUT
 
     - name: Restore OpenVINO

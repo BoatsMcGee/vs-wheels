@@ -1,6 +1,9 @@
 name: Setup ONNX (Windows)
 description: Compiles ONNX from source on Windows
 inputs:
+  os:
+    description: The OS runner name (e.g. windows-2025-vs2026)
+    required: true
   onnx-tag:
     description: The Git tag or commit hash of ONNX to build
     required: true
@@ -19,7 +22,7 @@ runs:
         $protoMode = if ("${{ inputs.use-external-protobuf }}" -eq "true") { "external" } else { "custom" }
         "key=${{ format(
           'setup-onnx-{0}-{1}-{2}',
-          runner.os,
+          inputs.os,
           inputs.onnx-tag,
           hashFiles('.github/cmake-cache/onnx-base.cmake', '.github/cmake-cache/onnx-windows.cmake')
         ) }}-$protoMode" | Out-File -FilePath $env:GITHUB_OUTPUT -Append

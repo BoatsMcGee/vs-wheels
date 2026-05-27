@@ -1,6 +1,9 @@
 name: Setup OpenVINO (macOS)
 description: Compiles OpenVINO from source on macOS
 inputs:
+  os:
+    description: The OS runner name (e.g. macos-15)
+    required: true
   openvino-tag:
     description: The Git tag or commit hash of OpenVINO to build
     required: true
@@ -17,7 +20,7 @@ runs:
             '.github/cmake-cache/openvino-macos.cmake',
             '.github/cmake-cache/openvino-aarch64.cmake'
           ) }}"
-        echo "key=setup-openvino-${RUNNER_OS}-${{ inputs.openvino-tag }}-${HASH}" >> $GITHUB_OUTPUT
+        echo "key=setup-openvino-${{ inputs.os }}-${{ inputs.openvino-tag }}-${HASH}" >> $GITHUB_OUTPUT
 
     - name: Restore OpenVINO
       id: cache-openvino

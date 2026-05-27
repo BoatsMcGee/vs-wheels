@@ -149,18 +149,21 @@ jobs:
         uses: ./.github/actions/setup-onnx-windows
         with:
           onnx-tag: ${{ env.ONNX_WINDOWS_TAG }}
+          os: ${{ matrix.os }}
 
       - name: Build ONNX dependency (Linux)
         if: runner.os == 'Linux'
         uses: ./.github/actions/setup-onnx-linux
         with:
           onnx-tag: ${{ env.ONNX_LINUX_TAG }}
+          os: ${{ matrix.os }}
 
       - name: Build ONNX dependency (macOS)
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup-onnx-macos
         with:
           onnx-tag: ${{ env.ONNX_MACOS_TAG }}
+          os: ${{ matrix.os }}
 
       - name: Build NCNN dependency (Windows)
         if: runner.os == 'Windows'
@@ -168,6 +171,7 @@ jobs:
         with:
           ncnn-tag: ${{ env.NCNN_WINDOWS_TAG }}
           vulkan-version: ${{ env.VULKAN_WINDOWS_VERSION }}
+          os: ${{ matrix.os }}
 
       - name: Build NCNN dependency (Linux)
         if: runner.os == 'Linux'
@@ -175,6 +179,7 @@ jobs:
         with:
           ncnn-tag: ${{ env.NCNN_LINUX_TAG }}
           vulkan-version: ${{ env.VULKAN_LINUX_VERSION }}
+          os: ${{ matrix.os }}
 
       - name: Build NCNN dependency (macOS)
         if: runner.os == 'macOS'
@@ -182,6 +187,7 @@ jobs:
         with:
           ncnn-tag: ${{ env.NCNN_MACOS_TAG }}
           vulkan-version: ${{ env.VULKAN_MACOS_VERSION }}
+          os: ${{ matrix.os }}
 
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}

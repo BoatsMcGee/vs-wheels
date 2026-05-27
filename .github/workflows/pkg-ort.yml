@@ -115,18 +115,21 @@ jobs:
         uses: ./.github/actions/setup-onnxruntime-windows
         with:
           onnxruntime-tag: ${{ env.ONNXRUNTIME_WINDOWS_TAG }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build ONNX Runtime dependency (Linux)
         if: runner.os == 'Linux'
         uses: ./.github/actions/setup-onnxruntime-linux
         with:
           onnxruntime-tag: ${{ env.ONNXRUNTIME_LINUX_TAG }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build ONNX Runtime dependency (macOS)
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup-onnxruntime-macos
         with:
           onnxruntime-tag: ${{ env.ONNXRUNTIME_MACOS_TAG }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Get ONNX version from ONNX Runtime
         id: get-onnx-version
@@ -141,18 +144,21 @@ jobs:
         uses: ./.github/actions/setup-onnx-windows
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build ONNX dependency (Linux)
         if: runner.os == 'Linux'
         uses: ./.github/actions/setup-onnx-linux
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build ONNX dependency (macOS)
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup-onnx-macos
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}

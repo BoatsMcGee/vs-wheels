@@ -141,6 +141,7 @@ jobs:
           build-cuda: true
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
           cudnn-version: ${{ env.CUDNN_WINDOWS_VERSION }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build ONNX Runtime dependency (Linux)
         if: runner.os == 'Linux'
@@ -151,6 +152,7 @@ jobs:
           cuda-version: ${{ env.CUDA_LINUX_VERSION }}
           cuda-repo: ${{ matrix.cuda_repo }}
           cudnn-version: ${{ env.CUDNN_LINUX_VERSION }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Get ONNX version from ONNX Runtime
         id: get-onnx-version
@@ -165,12 +167,14 @@ jobs:
         uses: ./.github/actions/setup-onnx-windows
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build ONNX dependency (Linux)
         if: runner.os == 'Linux'
         uses: ./.github/actions/setup-onnx-linux
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}-cuda

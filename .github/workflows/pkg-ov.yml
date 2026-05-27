@@ -113,18 +113,21 @@ jobs:
         uses: ./.github/actions/setup-openvino-windows
         with:
           openvino-tag: ${{ env.OPENVINO_WINDOWS_TAG }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build OpenVINO dependency (Linux)
         if: runner.os == 'Linux'
         uses: ./.github/actions/setup-openvino-linux
         with:
           openvino-tag: ${{ env.OPENVINO_LINUX_TAG }}
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build OpenVINO dependency (macOS)
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup-openvino-macos
         with:
           openvino-tag: ${{ env.OPENVINO_MACOS_TAG }}
+          os: ${{ matrix.container || matrix.os }}
       - name: Install jq
         if: matrix.container
         run: dnf install -y jq
@@ -157,6 +160,7 @@ jobs:
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
           use-external-protobuf: true
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build ONNX dependency (Linux)
         if: runner.os == 'Linux'
@@ -164,6 +168,7 @@ jobs:
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
           use-external-protobuf: true
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build ONNX dependency (macOS)
         if: runner.os == 'macOS'
@@ -171,6 +176,7 @@ jobs:
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
           use-external-protobuf: true
+          os: ${{ matrix.container || matrix.os }}
 
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}

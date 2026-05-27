@@ -1,6 +1,9 @@
 name: Setup NCNN (Windows)
 description: Builds NCNN for Windows
 inputs:
+  os:
+    description: The OS runner name (e.g. windows-2025-vs2026)
+    required: true
   ncnn-tag:
     description: The Git tag or commit hash of NCNN to build
     required: true
@@ -17,7 +20,7 @@ runs:
       run: |
         "key=${{ format(
           'setup-ncnn-{0}-{1}-vulkan-{2}-{3}',
-          runner.os,
+          inputs.os,
           inputs.ncnn-tag,
           inputs.vulkan-version,
           hashFiles('.github/cmake-cache/ncnn-base.cmake', '.github/cmake-cache/ncnn-windows.cmake')

@@ -1,6 +1,9 @@
 name: Setup OpenVINO (Windows)
 description: Compiles OpenVINO from source on Windows
 inputs:
+  os:
+    description: The OS runner name (e.g. windows-2025-vs2026)
+    required: true
   openvino-tag:
     description: The Git tag or commit hash of OpenVINO to build
     required: true
@@ -23,7 +26,7 @@ runs:
           '.github/cmake-cache/openvino-windows.cmake',
           '.github/cmake-cache/openvino-x64.cmake'
         ) }}"
-        "key=setup-openvino-${{ runner.os }}-${{ inputs.openvino-tag }}-$hash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        "key=setup-openvino-${{ inputs.os }}-${{ inputs.openvino-tag }}-$hash" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
     - name: Restore OpenVINO
       id: cache-openvino

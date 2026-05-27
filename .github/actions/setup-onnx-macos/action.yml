@@ -1,6 +1,9 @@
 name: Setup ONNX (macOS)
 description: Compiles ONNX from source on macOS
 inputs:
+  os:
+    description: The OS runner name (e.g. macos-15)
+    required: true
   onnx-tag:
     description: The Git tag or commit hash of ONNX to build
     required: true
@@ -22,7 +25,7 @@ runs:
         fi
         echo "key=${{ format(
           'setup-onnx-{0}-{1}-{2}-{3}',
-          runner.os,
+          inputs.os,
           runner.arch,
           inputs.onnx-tag,
           hashFiles('.github/cmake-cache/onnx-base.cmake', '.github/cmake-cache/onnx-unix.cmake')

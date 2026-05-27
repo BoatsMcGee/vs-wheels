@@ -1,6 +1,9 @@
 name: Setup NCNN (macOS)
 description: Builds NCNN for macOS
 inputs:
+  os:
+    description: The OS runner name (e.g. macos-15)
+    required: true
   ncnn-tag:
     description: The Git tag or commit hash of NCNN to build
     required: true
@@ -17,7 +20,7 @@ runs:
       run: |
         echo "key=${{ format(
           'setup-ncnn-{0}-{1}-{2}-vulkan-{3}-{4}',
-          runner.os,
+          inputs.os,
           runner.arch,
           inputs.ncnn-tag,
           inputs.vulkan-version,

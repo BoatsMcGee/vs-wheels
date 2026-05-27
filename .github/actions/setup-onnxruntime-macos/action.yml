@@ -1,6 +1,9 @@
 name: Setup ONNX Runtime (macOS)
 description: Compiles ONNX Runtime from source on macOS
 inputs:
+  os:
+    description: The OS runner name (e.g. macos-15)
+    required: true
   onnxruntime-tag:
     description: The Git tag or commit hash of ONNX Runtime to build
     required: true
@@ -16,7 +19,7 @@ runs:
             '.github/cmake-cache/onnxruntime-base.cmake',
             '.github/cmake-cache/onnxruntime-macos.cmake'
           ) }}"
-        echo "key=setup-onnxruntime-${RUNNER_OS}-${{ inputs.onnxruntime-tag }}-${HASH}" >> $GITHUB_OUTPUT
+        echo "key=setup-onnxruntime-${{ inputs.os }}-${{ inputs.onnxruntime-tag }}-${HASH}" >> $GITHUB_OUTPUT
 
     - name: Restore ONNX Runtime
       id: cache-onnx

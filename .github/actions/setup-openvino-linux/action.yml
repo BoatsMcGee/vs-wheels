@@ -28,7 +28,10 @@ runs:
           '.github/cmake-cache/openvino-x64.cmake',
           '.github/cmake-cache/openvino-aarch64.cmake'
         ) }}"
-        echo "key=setup-openvino-${{ inputs.os }}-${ARCH}-${{ inputs.openvino-tag }}-${HASH}" >> $GITHUB_OUTPUT
+        OS_INPUT="${{ inputs.os }}"
+        OS_SANITIZED="${OS_INPUT//\//-}"
+        OS_SANITIZED="${OS_SANITIZED//:/-}"
+        echo "key=setup-openvino-${OS_SANITIZED}-${ARCH}-${{ inputs.openvino-tag }}-${HASH}" >> $GITHUB_OUTPUT
         echo "arch_file=$ARCH_FILE" >> $GITHUB_OUTPUT
 
     - name: Restore OpenVINO

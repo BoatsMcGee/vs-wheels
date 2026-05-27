@@ -54,7 +54,10 @@ runs:
             '.github/cmake-cache/onnxruntime-aarch64.cmake'
           ) }}"
         fi
-        echo "key=setup-onnxruntime-${{ inputs.os }}-${ARCH}-${{ inputs.onnxruntime-tag }}-${CUDA_PART}-${HASH}" >> $GITHUB_OUTPUT
+        OS_INPUT="${{ inputs.os }}"
+        OS_SANITIZED="${OS_INPUT//\//-}"
+        OS_SANITIZED="${OS_SANITIZED//:/-}"
+        echo "key=setup-onnxruntime-${OS_SANITIZED}-${ARCH}-${{ inputs.onnxruntime-tag }}-${CUDA_PART}-${HASH}" >> $GITHUB_OUTPUT
         echo "arch_file=$ARCH_FILE" >> $GITHUB_OUTPUT
 
     - name: Restore ONNX Runtime

@@ -23,13 +23,11 @@ runs:
         if [ "${{ inputs.use-external-protobuf }}" = "true" ]; then
           PROTO_MODE="external"
         fi
-        echo "key=${{ format(
-          'setup-onnx-{0}-{1}-{2}-{3}',
-          inputs.os,
-          runner.arch,
-          inputs.onnx-tag,
-          hashFiles('.github/cmake-cache/onnx-base.cmake', '.github/cmake-cache/onnx-unix.cmake')
-        ) }}-${PROTO_MODE}" >> $GITHUB_OUTPUT
+        OS_INPUT="${{ inputs.os }}"
+        OS_SANITIZED="${OS_INPUT//\//-}"
+        OS_SANITIZED="${OS_SANITIZED//:/-}"
+        HASH="${{ hashFiles('.github/cmake-cache/onnx-base.cmake', '.github/cmake-cache/onnx-unix.cmake') }}"
+        echo "key=setup-onnx-${OS_SANITIZED}-${{ runner.arch }}-${{ inputs.onnx-tag }}-${HASH}-${PROTO_MODE}" >> $GITHUB_OUTPUT
 
     - name: Restore ONNX
       id: cache-onnx

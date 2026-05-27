@@ -18,14 +18,11 @@ runs:
       id: cache-key
       shell: bash
       run: |
-        echo "key=${{ format(
-          'setup-ncnn-{0}-{1}-{2}-vulkan-{3}-{4}',
-          inputs.os,
-          runner.arch,
-          inputs.ncnn-tag,
-          inputs.vulkan-version,
-          hashFiles('.github/cmake-cache/ncnn-base.cmake', '.github/cmake-cache/ncnn-linux.cmake')
-        ) }}" >> $GITHUB_OUTPUT
+        OS_INPUT="${{ inputs.os }}"
+        OS_SANITIZED="${OS_INPUT//\//-}"
+        OS_SANITIZED="${OS_SANITIZED//:/-}"
+        HASH="${{ hashFiles('.github/cmake-cache/ncnn-base.cmake', '.github/cmake-cache/ncnn-linux.cmake') }}"
+        echo "key=setup-ncnn-${OS_SANITIZED}-${{ runner.arch }}-${{ inputs.ncnn-tag }}-vulkan-${{ inputs.vulkan-version }}-${HASH}" >> $GITHUB_OUTPUT
 
     - name: Restore NCNN
       id: cache-ncnn

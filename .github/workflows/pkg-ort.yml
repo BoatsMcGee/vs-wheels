@@ -59,7 +59,7 @@ on:
 env:
   ONNXRUNTIME_WINDOWS_TAG: ${{ inputs.onnxruntime-windows-tag || 'v1.26.0' }}
   ONNXRUNTIME_LINUX_TAG: ${{ inputs.onnxruntime-linux-tag || 'v1.26.0' }}
-  ONNXRUNTIME_MACOS_TAG: ${{ inputs.onnxruntime-linux-tag || 'v1.26.0' }}
+  ONNXRUNTIME_MACOS_TAG: ${{ inputs.onnxruntime-macos-tag || 'v1.26.0' }}
   PACKAGE_NAME: ort
 
 jobs:
@@ -78,6 +78,8 @@ jobs:
             os: windows-2022
           - name: macOS ARM64
             os: macos-15
+          - name: macOS x64
+            os: macos-15-intel
 
     name: Build wheels on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -115,7 +117,7 @@ jobs:
         uses: ./.github/actions/setup-onnxruntime-windows
         with:
           onnxruntime-tag: ${{ env.ONNXRUNTIME_WINDOWS_TAG }}
-          os: ${{ matrix.container || matrix.os }}
+          os: ${{ matrix.os }}
 
       - name: Build ONNX Runtime dependency (Linux)
         if: runner.os == 'Linux'
@@ -129,7 +131,7 @@ jobs:
         uses: ./.github/actions/setup-onnxruntime-macos
         with:
           onnxruntime-tag: ${{ env.ONNXRUNTIME_MACOS_TAG }}
-          os: ${{ matrix.container || matrix.os }}
+          os: ${{ matrix.os }}
 
       - name: Get ONNX version from ONNX Runtime
         id: get-onnx-version

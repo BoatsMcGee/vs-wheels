@@ -15,11 +15,21 @@ runs:
       id: cache-key
       shell: bash
       run: |
+        ARCH=$(uname -m)
+        if [ "$ARCH" = "x86_64" ]; then
+          ARCH_FILE=".github/cmake-cache/onnxruntime-macos-x86_64.cmake"
+        elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+          ARCH_FILE=".github/cmake-cache/onnxruntime-macos-arm64.cmake"
+        fi
+
         HASH="${{ hashFiles(
             '.github/cmake-cache/onnxruntime-base.cmake',
-            '.github/cmake-cache/onnxruntime-macos.cmake'
+            '.github/cmake-cache/onnxruntime-macos.cmake',
+            '.github/cmake-cache/onnxruntime-macos-x86_64.cmake',
+            '.github/cmake-cache/onnxruntime-macos-arm64.cmake'
           ) }}"
-        echo "key=setup-onnxruntime-${{ inputs.os }}-${{ inputs.onnxruntime-tag }}-${HASH}" >> $GITHUB_OUTPUT
+        echo "key=setup-onnxruntime-${{ inputs.os }}-${ARCH}-${{ inputs.onnxruntime-tag }}-${HASH}" >> $GITHUB_OUTPUT
+        echo "arch-file=$ARCH_FILE" >> $GITHUB_OUTPUT
 
     - name: Restore ONNX Runtime
       id: cache-onnx
@@ -50,6 +60,10 @@ runs:
           -C "$GITHUB_WORKSPACE/.github/cmake-cache/onnxruntime-base.cmake"
           -C "$GITHUB_WORKSPACE/.github/cmake-cache/onnxruntime-macos.cmake"
         )
+
+        if [ -n "${{ steps.cache-key.outputs.arch-file }}" ]; then
+          CMAKE_ARGS+=(-C "$GITHUB_WORKSPACE/${{ steps.cache-key.outputs.arch-file }}")
+        fi
 
         cmake "${CMAKE_ARGS[@]}"
 

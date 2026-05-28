@@ -186,6 +186,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           uvx --with patchelf auditwheel repair \
+            --exclude libonnxruntime.so.* \
             --exclude libonnxruntime_providers_cuda.so.* \
             --exclude libonnxruntime_providers_shared.so.* \
             --strip dist/*.whl \

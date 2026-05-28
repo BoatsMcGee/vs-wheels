@@ -25,3 +25,23 @@ substatus:
 [windows]
 dev-shell:
   @pwsh -NoProfile -ExecutionPolicy Bypass -NoExit -File scripts\Enter-DevShell.ps1
+
+# Build one or more CPU packages
+build *args:
+  #!{{shebang}}
+  if ($args.Count -eq 0) {
+    Write-Host "Please specify at least one package to build" -ForegroundColor Yellow
+    exit 1
+  }
+  foreach ($pkg in $args) {
+    switch ($pkg) {
+      "bm3dcpu"      { & scripts/builds/Build-BM3DCPU.ps1 }
+      "fmtc"         { & scripts/builds/Build-FMTC.ps1 }
+      "dfttest2_cpu" { & scripts/builds/Build-DFTTest2-CPU.ps1 }
+      "dfttest2_gcc" { & scripts/builds/Build-DFTTest2-GCC.ps1 }
+      default {
+        Write-Error "Unknown package"
+        exit 1
+      }
+    }
+  }

@@ -112,6 +112,7 @@
     "cmake.configureOnEdit": false,
     "cmake.configureOnOpen": false,
     "cmake.ignoreCMakeListsMissing": true,
+    "mesonbuild.selectRootDir": false,
   },
   "extensions": {
     "recommendations": [

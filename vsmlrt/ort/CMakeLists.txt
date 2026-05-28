@@ -182,23 +182,80 @@ if(WIN32)
   endif()
 endif()
 
-# Copy CUDA provider shared libraries on Linux (mirrors the Windows DLL bundling above).
-# These are dlopen'd at runtime by libonnxruntime.so and invisible to auditwheel.
 if(UNIX AND NOT APPLE AND ENABLE_CUDA)
   get_filename_component(_ROOT "${onnxruntime_DIR}/../../.." ABSOLUTE)
+  if(DEFINED ENV{CUDA_PATH})
+    file(TO_CMAKE_PATH "$ENV{CUDA_PATH}" _CUDA_PATH)
+  endif()
+  if(DEFINED ENV{CUDNN_PATH})
+    file(TO_CMAKE_PATH "$ENV{CUDNN_PATH}" _CUDNN_PATH)
+  endif()
+  if(DEFINED ENV{CUDNN_HOME})
+    file(TO_CMAKE_PATH "$ENV{CUDNN_HOME}" _CUDNN_HOME)
+  endif()
+
+  # Glob candidate libraries to bundle
   file(
-    GLOB _PROVIDER_LIBS
-    "${_ROOT}/lib/libonnxruntime.so.1"
-    "${_ROOT}/lib64/libonnxruntime.so.1"
-    "${_ROOT}/lib/libonnxruntime_providers_cuda.so"
-    "${_ROOT}/lib/libonnxruntime_providers_shared.so"
-    "${_ROOT}/lib64/libonnxruntime_providers_cuda.so"
-    "${_ROOT}/lib64/libonnxruntime_providers_shared.so"
+    GLOB _LINUX_LIBS_PATHS
+    # cuDNN
+    "${_CUDNN_PATH}/lib/libcudnn*.so*"
+    "${_CUDNN_HOME}/lib/libcudnn*.so*"
+    "${_CUDNN_PATH}/lib64/libcudnn*.so*"
+    "${_CUDNN_HOME}/lib64/libcudnn*.so*"
+    # CUDA
+    "${_CUDA_PATH}/lib64/libcublas*.so*"
+    "${_CUDA_PATH}/lib64/libcudart*.so*"
+    "${_CUDA_PATH}/lib64/libcufft*.so*"
+    "${_CUDA_PATH}/lib64/libcurand*.so*"
+    "${_CUDA_PATH}/targets/*-linux/lib/libcublas*.so*"
+    "${_CUDA_PATH}/targets/*-linux/lib/libcudart*.so*"
+    "${_CUDA_PATH}/targets/*-linux/lib/libcufft*.so*"
+    "${_CUDA_PATH}/targets/*-linux/lib/libcurand*.so*"
+    "/usr/lib64/libcublas*.so*"
+    "/usr/lib64/libcudart*.so*"
+    "/usr/lib64/libcufft*.so*"
+    "/usr/lib64/libcurand*.so*"
+    # ONNX Runtime provider libraries
+    "${_ROOT}/lib/libonnxruntime*.so*"
+    "${_ROOT}/lib64/libonnxruntime*.so*"
   )
-  if(_PROVIDER_LIBS)
-    install(FILES ${_PROVIDER_LIBS} DESTINATION .)
+
+  if(_LINUX_LIBS_PATHS)
+    list(REMOVE_DUPLICATES _LINUX_LIBS_PATHS)
+    foreach(_LIB_PATH IN LISTS _LINUX_LIBS_PATHS)
+      get_filename_component(_LIB_NAME "${_LIB_PATH}" NAME)
+      get_filename_component(_REAL_PATH "${_LIB_PATH}" REALPATH)
+
+      # Check if the filename ends in ".so"
+      get_filename_component(_LIB_EXT "${_LIB_NAME}" EXT)
+      if("${_LIB_EXT}" STREQUAL ".so")
+        set(_ENDS_IN_SO ON)
+      else()
+        set(_ENDS_IN_SO OFF)
+      endif()
+
+      # Determine if we should bundle this library:
+      # - Symlinks (which represent the SONAME) that have a version suffix (e.g. libcublas.so.13)
+      # - Real files that are unversioned and end in .so (e.g. libonnxruntime_providers_cuda.so)
+      get_filename_component(_REAL_NAME "${_REAL_PATH}" NAME)
+      set(_SHOULD_BUNDLE OFF)
+      if(NOT "${_LIB_NAME}" STREQUAL "${_REAL_NAME}")
+        if(NOT _ENDS_IN_SO)
+          set(_SHOULD_BUNDLE ON)
+        endif()
+      else()
+        if(_ENDS_IN_SO)
+          set(_SHOULD_BUNDLE ON)
+        endif()
+      endif()
+
+      if(_SHOULD_BUNDLE)
+        message(STATUS "Bundling: ${_REAL_PATH} as ${_LIB_NAME}")
+        install(FILES "${_REAL_PATH}" RENAME "${_LIB_NAME}" DESTINATION .)
+      endif()
+    endforeach()
   else()
-    message(WARNING "Could not find ONNX Runtime CUDA provider libraries in ${_ROOT}")
+    message(WARNING "Could not find any Linux CUDA, cuDNN, or ORT libraries to bundle")
   endif()
 endif()
 

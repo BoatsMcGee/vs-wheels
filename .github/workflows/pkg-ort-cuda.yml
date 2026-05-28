@@ -131,6 +131,9 @@ jobs:
         run: |
           uv tool install cmake
           uv tool install ninja
+          uv tool install auditwheel
+          uv tool install patchelf
+          uv tool install wheel
 
       - name: Build ONNX Runtime dependency (Windows)
         if: runner.os == 'Windows'
@@ -185,14 +188,36 @@ jobs:
       - name: Repair wheel (Linux)
         if: runner.os == 'Linux'
         run: |
-          uvx --with patchelf auditwheel repair \
-            --exclude libonnxruntime.so.* \
-            --exclude libonnxruntime_providers_cuda.so.* \
-            --exclude libonnxruntime_providers_shared.so.* \
+          auditwheel repair \
+            --exclude libonnxruntime.so* \
+            --exclude libonnxruntime_providers_cuda.so* \
+            --exclude libonnxruntime_providers_shared.so* \
+            --exclude libcudnn.so* \
+            --exclude libcudnn_*.so* \
+            --exclude libcublas.so* \
+            --exclude libcublasLt.so* \
+            --exclude libcudart.so* \
+            --exclude libcufft.so* \
+            --exclude libcurand.so* \
             --strip dist/*.whl \
             -w repaired_wheels
           rm dist/*.whl
           mv repaired_wheels/*.whl dist/
+
+          # Fix RPATH for all bundled libraries in the repaired wheel to ensure they find each other via $ORIGIN&
+          echo "=== Patching RPATHs inside repaired wheel ==="
+          wheel unpack dist/*.whl
+          UNPACKED_DIR=$(ls -d vapoursynth_mlrt_ort_cuda-*)
+          for f in "$UNPACKED_DIR"/vapoursynth/plugins/ort/*.so*; do
+            if [ -f "$f" ] && [ ! -L "$f" ]; then
+              echo "Setting RPATH to \$ORIGIN on: $(basename "$f")"
+              patchelf --set-rpath '$ORIGIN' "$f"
+            fi
+          done
+          echo "Repacking wheel..."
+          rm dist/*.whl
+          wheel pack "$UNPACKED_DIR" -d dist/
+          rm -rf "$UNPACKED_DIR"
 
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

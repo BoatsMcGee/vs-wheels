@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.22)
 project(VSORT_Package)
 
+# === Apply patches ===
+include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
+
+set(SRC_VSORT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt")
+set(BIN_VSORT_DIR "${CMAKE_CURRENT_BINARY_DIR}/vs-mlrt")
+
+add_patched_source(
+  PATCHED_WIN32
+  "${SRC_VSORT_DIR}/vsort/win32.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/patches/more-cudnn-libs.patch"
+)
+
 # === C++ Standard & Options ===
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

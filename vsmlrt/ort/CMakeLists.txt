@@ -188,8 +188,8 @@ if(UNIX AND NOT APPLE AND ENABLE_CUDA)
   get_filename_component(_ROOT "${onnxruntime_DIR}/../../.." ABSOLUTE)
   file(
     GLOB _PROVIDER_LIBS
-    "${_ROOT}/lib/libonnxruntime.so"
-    "${_ROOT}/lib64/libonnxruntime.so"
+    "${_ROOT}/lib/libonnxruntime.so.1"
+    "${_ROOT}/lib64/libonnxruntime.so.1"
     "${_ROOT}/lib/libonnxruntime_providers_cuda.so"
     "${_ROOT}/lib/libonnxruntime_providers_shared.so"
     "${_ROOT}/lib64/libonnxruntime_providers_cuda.so"

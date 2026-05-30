@@ -40,37 +40,37 @@ on:
         description: ONNX tag for Windows (https://github.com/onnx/onnx)
         type: string
         required: false
-        default: "v1.21.0"
+        default: "v1.21.0" # renovate: datasource=github-tags depName=onnx/onnx
       onnx-linux-tag:
         description: ONNX tag for Linux (https://github.com/onnx/onnx)
         type: string
         required: false
-        default: "v1.21.0"
+        default: "v1.21.0" # renovate: datasource=github-tags depName=onnx/onnx
       onnx-macos-tag:
         description: ONNX tag for macOS (https://github.com/onnx/onnx)
         type: string
         required: false
-        default: "v1.21.0"
+        default: "v1.21.0" # renovate: datasource=github-tags depName=onnx/onnx
       ncnn-windows-tag:
         description: NCNN tag for Windows (https://github.com/Tencent/ncnn)
         type: string
         required: false
-        default: "20260526"
+        default: "20260526" # renovate: datasource=github-tags depName=Tencent/ncnn
       ncnn-linux-tag:
         description: NCNN tag for Linux (https://github.com/Tencent/ncnn)
         type: string
         required: false
-        default: "20260526"
+        default: "20260526" # renovate: datasource=github-tags depName=Tencent/ncnn
       ncnn-macOS-tag:
         description: NCNN tag for macOS (https://github.com/Tencent/ncnn)
         type: string
         required: false
-        default: "20260526"
+        default: "20260526" # renovate: datasource=github-tags depName=Tencent/ncnn
       vulkan-windows-version:
         description: Vulkan version for Windows (https://vulkan.lunarg.com/sdk/home)
         type: string
         required: false
-        default: "1.4.350.0"
+        default: "1.4.350.0" # renovate: datasource=custom.vulkan-sdk-windows depName=vulkan-windows
       vulkan-linux-version:
         description: >-
           Vulkan version for Linux
@@ -78,23 +78,23 @@ on:
           (https://github.com/jakoch/vulkan-sdk-arm for ARM64)
         type: string
         required: false
-        default: "1.4.350.1"
+        default: "1.4.350.1" # renovate: datasource=custom.vulkan-sdk-linux depName=vulkan-linux
       vulkan-macos-version:
         description: Vulkan version for macOS (https://vulkan.lunarg.com/sdk/home)
         type: string
         required: false
-        default: "1.4.350.0"
+        default: "1.4.350.0" # renovate: datasource=custom.vulkan-sdk-mac depName=vulkan-mac
 
 env:
-  ONNX_WINDOWS_TAG: ${{ inputs.onnx-windows-tag || 'v1.21.0' }}
-  ONNX_LINUX_TAG: ${{ inputs.onnx-linux-tag || 'v1.21.0' }}
-  ONNX_MACOS_TAG: ${{ inputs.onnx-macos-tag || 'v1.21.0' }}
-  NCNN_WINDOWS_TAG: ${{ inputs.ncnn-windows-tag || '20260526' }}
-  NCNN_LINUX_TAG: ${{ inputs.ncnn-linux-tag || '20260526' }}
-  NCNN_MACOS_TAG: ${{ inputs.ncnn-macos-tag || '20260526' }}
-  VULKAN_WINDOWS_VERSION: ${{ inputs.vulkan-windows-version || '1.4.350.0' }}
-  VULKAN_LINUX_VERSION: ${{ inputs.vulkan-linux-version || '1.4.350.1' }}
-  VULKAN_MACOS_VERSION: ${{ inputs.vulkan-macos-version || '1.4.350.0' }}
+  ONNX_WINDOWS_TAG: ${{ inputs.onnx-windows-tag || 'v1.21.0' }} # renovate: datasource=github-tags depName=onnx/onnx
+  ONNX_LINUX_TAG: ${{ inputs.onnx-linux-tag || 'v1.21.0' }} # renovate: datasource=github-tags depName=onnx/onnx
+  ONNX_MACOS_TAG: ${{ inputs.onnx-macos-tag || 'v1.21.0' }} # renovate: datasource=github-tags depName=onnx/onnx
+  NCNN_WINDOWS_TAG: ${{ inputs.ncnn-windows-tag || '20260526' }} # renovate: datasource=github-tags depName=Tencent/ncnn
+  NCNN_LINUX_TAG: ${{ inputs.ncnn-linux-tag || '20260526' }} # renovate: datasource=github-tags depName=Tencent/ncnn
+  NCNN_MACOS_TAG: ${{ inputs.ncnn-macos-tag || '20260526' }} # renovate: datasource=github-tags depName=Tencent/ncnn
+  VULKAN_WINDOWS_VERSION: ${{ inputs.vulkan-windows-version || '1.4.350.0' }} # renovate: datasource=custom.vulkan-sdk-windows depName=vulkan-windows
+  VULKAN_LINUX_VERSION: ${{ inputs.vulkan-linux-version || '1.4.350.1' }} # renovate: datasource=custom.vulkan-sdk-linux depName=vulkan-linux
+  VULKAN_MACOS_VERSION: ${{ inputs.vulkan-macos-version || '1.4.350.0' }} # renovate: datasource=custom.vulkan-sdk-mac depName=vulkan-mac
   PACKAGE_NAME: ncnn
 
 jobs:

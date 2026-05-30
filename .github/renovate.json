@@ -12,6 +12,32 @@
     ":semanticCommitScopeDisabled",
     ":semanticCommitTypeAll(deps)"
   ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/pkg-.*\\.yml$/"],
+      "matchStrings": [
+        "(?:default:|\\|\\|)\\s+['\"](?<currentValue>[^'\"]+)['\"].*?# renovate: datasource=(?<datasource>[a-z-\\.]+) depName=(?<depName>[^\\s]+)(?: versioning=(?<versioning>[^\\s]+))?"
+      ]
+    }
+  ],
+  "customDatasources": {
+    "vulkan-sdk-windows": {
+      "defaultRegistryUrlTemplate": "https://vulkan.lunarg.com/sdk/latest.json",
+      "format": "json",
+      "transformTemplates": ["{\"releases\": [{\"version\": $.windows}]}"]
+    },
+    "vulkan-sdk-linux": {
+      "defaultRegistryUrlTemplate": "https://vulkan.lunarg.com/sdk/latest.json",
+      "format": "json",
+      "transformTemplates": ["{\"releases\": [{\"version\": $.linux}]}"]
+    },
+    "vulkan-sdk-mac": {
+      "defaultRegistryUrlTemplate": "https://vulkan.lunarg.com/sdk/latest.json",
+      "format": "json",
+      "transformTemplates": ["{\"releases\": [{\"version\": $.mac}]}"]
+    }
+  },
   "git-submodules": {
     "enabled": true
   },
@@ -48,6 +74,10 @@
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["quay.io/pypa/manylinux_2_28_x86_64"],
       "enabled": false
+    },
+    {
+      "matchManagers": ["custom.regex"],
+      "automerge": false
     }
   ]
 }

@@ -55,7 +55,8 @@
     "vsmlrt/ort/vapoursynth",
     "vsmlrt/ov/vapoursynth",
     "vsmlrt/trt/vapoursynth",
-    "vsmlrt/trt_rtx/vapoursynth"
+    "vsmlrt/trt_rtx/vapoursynth",
+    "vsmlrt/migx/vapoursynth"
   ],
   "packageRules": [
     {

@@ -41,7 +41,7 @@
       "defaultRegistryUrlTemplate": "https://repo.radeon.com/rocm/el8/",
       "format": "html",
       "transformTemplates": [
-        "{\"releases\": releases[version ~> /^[0-9]+(\\\\.[0-9]+)*\\\\/?$/].{ \"version\": $replace(version, \"/\", \"\") }}"
+        "{\"releases\": releases.{\"version\": $replace(version, \"/\", \"\")}[version ~> /^[0-9]+(\\.[0-9]+)*$/]}"
       ]
     }
   },

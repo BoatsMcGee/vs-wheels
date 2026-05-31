@@ -59,13 +59,13 @@ on:
         description: OpenVINO tag for macOS x86_64 (https://github.com/openvinotoolkit/openvino/)
         type: string
         required: false
-        default: "2025.2.0"
+        default: "2026.2.0"
 
 env:
   OPENVINO_WINDOWS_TAG: ${{ inputs.openvino-windows-tag || '2026.2.0' }} # renovate: datasource=github-tags depName=openvinotoolkit/openvino
   OPENVINO_LINUX_TAG: ${{ inputs.openvino-linux-tag || '2026.2.0' }} # renovate: datasource=github-tags depName=openvinotoolkit/openvino
   OPENVINO_MACOS_ARM64_TAG: ${{ inputs.openvino-macos-arm64-tag || '2026.2.0' }} # renovate: datasource=github-tags depName=openvinotoolkit/openvino
-  OPENVINO_MACOS_x86_64_TAG: ${{ inputs.openvino-macos-x86-64-tag || '2025.2.0' }}
+  OPENVINO_MACOS_x86_64_TAG: ${{ inputs.openvino-macos-x86-64-tag || '2026.2.0' }} # renovate: datasource=github-tags depName=openvinotoolkit/openvino
   PACKAGE_NAME: ov
 
 jobs:

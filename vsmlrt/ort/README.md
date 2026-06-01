@@ -13,7 +13,7 @@ pip install vapoursynth-mlrt-ort
 To install the CUDA-enabled package:
 
 ```bash
-pip install vapoursynth-mlrt-ort-cuda
+pip install vapoursynth-mlrt-ort-cuda --extra-index-url https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple
 ```
 
 ## Building from source

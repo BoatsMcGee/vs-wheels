@@ -5,7 +5,7 @@ This package contains the TensorRT backend implementation of the [vs-mlrt](https
 ## Installation
 
 ```bash
-pip install vapoursynth-mlrt-trt
+pip install vapoursynth-mlrt-trt --extra-index-url https://jaded-encoding-thaumaturgy.github.io/vs-wheels/simple
 ```
 
 ## Building from source

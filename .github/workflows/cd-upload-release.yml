@@ -57,3 +57,9 @@ jobs:
           body: ${{ inputs.display-name }} ${{ steps.version.outputs.version }}
           fail_on_unmatched_files: true
           generate_release_notes: false
+
+      - name: Trigger index update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh api repos/$GH_REPO/dispatches -f event_type=index

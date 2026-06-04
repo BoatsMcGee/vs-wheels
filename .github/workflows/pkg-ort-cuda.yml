@@ -208,7 +208,7 @@ jobs:
           echo "=== Patching RPATHs inside repaired wheel ==="
           wheel unpack dist/*.whl
           UNPACKED_DIR=$(ls -d vapoursynth_mlrt_ort_cuda-*)
-          for f in "$UNPACKED_DIR"/vapoursynth/plugins/ort/*.so*; do
+          for f in "$UNPACKED_DIR"/vapoursynth/plugins/ort-cuda/*.so*; do
             if [ -f "$f" ] && [ ! -L "$f" ]; then
               echo "Setting RPATH to \$ORIGIN on: $(basename "$f")"
               patchelf --set-rpath '$ORIGIN' "$f"

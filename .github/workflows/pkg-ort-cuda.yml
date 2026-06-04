@@ -319,4 +319,4 @@ jobs:
     with:
       wheel-pattern: ort-cuda-wheels-*
       sdist-name: ort-cuda-sdist
-      display-name: vapoursynth-mlrt-cuda
+      display-name: vapoursynth-mlrt-ort-cuda

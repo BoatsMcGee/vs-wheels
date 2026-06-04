@@ -66,7 +66,7 @@ if(UNIX)
   if(APPLE)
     set_target_properties(vstrt PROPERTIES INSTALL_RPATH "@loader_path")
   else()
-    set_target_properties(vstrt PROPERTIES INSTALL_RPATH "$ORIGIN")
+    set_target_properties(vstrt PROPERTIES INSTALL_RPATH "$ORIGIN/../../../tensorrt_libs")
   endif()
 endif()
 
@@ -119,37 +119,6 @@ if(WIN32)
     install(FILES ${_DLLS} DESTINATION "vsmlrt-cuda")
   else()
     message(WARNING "Could not find TensorRT DLLs")
-  endif()
-else()
-  # Copy TensorRT shared libraries on Linux
-  # These are dlopen'd at runtime by libnvinfer.so and invisible to auditwheel.
-  if(DEFINED ENV{TENSORRT_HOME})
-    file(TO_CMAKE_PATH "$ENV{TENSORRT_HOME}" _TENSORRT_HOME)
-    set(_TRT_LIB_PATHS "${_TENSORRT_HOME}/lib" "${_TENSORRT_HOME}/lib64")
-  else()
-    set(_TRT_LIB_PATHS "/usr/lib" "/usr/lib64" "/usr/lib/x86_64-linux-gnu" "/usr/lib/aarch64-linux-gnu")
-  endif()
-
-  set(_TRT_SEARCH_PATTERNS)
-  foreach(_PATH IN LISTS _TRT_LIB_PATHS)
-    list(
-      APPEND _TRT_SEARCH_PATTERNS
-      "${_PATH}/libnvinfer.so.${TRT_MAJOR}"
-      "${_PATH}/libnvinfer_plugin.so.${TRT_MAJOR}"
-      "${_PATH}/libnvinfer_dispatch.so.${TRT_MAJOR}"
-      "${_PATH}/libnvinfer_lean.so.${TRT_MAJOR}"
-    )
-  endforeach()
-
-  file(GLOB _LIBS ${_TRT_SEARCH_PATTERNS})
-  if(_LIBS)
-    foreach(_LIB IN LISTS _LIBS)
-      file(REAL_PATH "${_LIB}" _REAL_LIB)
-      get_filename_component(_LIB_NAME "${_LIB}" NAME)
-      install(FILES "${_REAL_LIB}" DESTINATION . RENAME "${_LIB_NAME}")
-    endforeach()
-  else()
-    message(WARNING "Could not find TensorRT libraries")
   endif()
 endif()
 

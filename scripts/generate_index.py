@@ -16,7 +16,7 @@ import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, NotRequired, Required, TypedDict
 
 import niquests
 import rich.console
@@ -26,6 +26,16 @@ from dumb_pypi.main import main as dumb_pypi_main  # type: ignore[import-untyped
 PACKAGES_URL_PLACEHOLDER = "https://__PACKAGES_PLACEHOLDER__"
 OUTPUT_DIR = Path("_site")
 LOGO_WIDTH = 100
+
+
+class AssetInfo(TypedDict, total=False):
+    url: Required[str]
+    hash: Required[str]
+    upload_timestamp: Required[int]
+    core_metadata: NotRequired[str]
+    requires_python: NotRequired[str]
+    yanked: NotRequired[str]
+
 
 console = rich.console.Console(
     stderr=True,
@@ -71,44 +81,98 @@ def fetch_releases(repo: str, token: str | None = None) -> list[dict[str, Any]]:
     return releases
 
 
-def collect_assets(releases: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Return a {filename: {url, hash}} mapping for all dist assets."""
-    assets = dict[str, dict[str, Any]]()
+def fetch_requires_python(asset: dict[str, Any], token: str | None) -> str | None:
+    """Fetch and parse the Requires-Python header from the metadata asset."""
+    headers = dict[str, str]()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        url = asset["url"]
+        headers["Accept"] = "application/octet-stream"
+    else:
+        url = asset["browser_download_url"]
+
+    try:
+        logger.debug(f"Fetching metadata file from: {url}")
+        with niquests.get(url, headers=headers) as resp:
+            resp.raise_for_status()
+            assert resp.text is not None
+            for line in resp.text.splitlines():
+                if line.lower().startswith("requires-python:"):
+                    return line.split(":", 1)[1].strip()
+    except Exception as e:
+        logger.warning(f"Failed to fetch or parse metadata from {url}: {e}")
+    return None
+
+
+def collect_assets(releases: list[dict[str, Any]], token: str | None = None) -> dict[str, AssetInfo]:
+    """
+    Return a {filename: AssetInfo} mapping for all dist assets.
+    """
+    assets: dict[str, AssetInfo] = {}
 
     for release in releases:
-        for asset in release.get("assets", []):
-            name = asset["name"]
-            if name.endswith((".whl", ".tar.gz")):
-                url = asset["browser_download_url"]
-                digest = asset.get("digest", "")
-                updated_at = asset["updated_at"]
+        release_assets = {a["name"]: a for a in release.get("assets", [])}
+        for name, release_asset in release_assets.items():
+            if not name.endswith((".whl", ".tar.gz")):
+                continue
 
-                assets[name] = {"url": url}
+            url = release_asset["browser_download_url"]
+            digest = release_asset.get("digest", "")
+            updated_at = release_asset["updated_at"]
 
-                if digest.startswith("sha256:"):
-                    assets[name]["hash"] = digest.split(":", 1)[1]
+            if not digest.startswith("sha256:"):
+                logger.warning(f"No SHA256 digest found for {name} in API response. Skipping.")
+                continue
+
+            assets[name] = AssetInfo(
+                url=url,
+                hash=digest.split(":", 1)[1],
+                upload_timestamp=int(datetime.strptime(updated_at, "%Y-%m-%dT%H:%M:%SZ").timestamp()),
+            )
+
+            # Check if a .metadata file exists in the release assets
+            if meta_asset := release_assets.get(name + ".metadata"):
+                meta_digest = meta_asset.get("digest", "")
+                if meta_digest.startswith("sha256:"):
+                    assets[name]["core_metadata"] = f"sha256={meta_digest.split(':', 1)[1]}"
                 else:
-                    logger.warning(f"No SHA256 digest found for {name} in API response. Skipping.")
+                    assets[name]["core_metadata"] = "true"
 
-                ts = datetime.strptime(updated_at, "%Y-%m-%dT%H:%M:%SZ")
-                assets[name]["upload_timestamp"] = int(ts.timestamp())
+                # Download and parse Requires-Python from metadata file
+                if requires_python := fetch_requires_python(meta_asset, token):
+                    assets[name]["requires_python"] = requires_python
+                    logger.debug(f"Found Requires-Python: {requires_python} for {name}")
+
+            # Check if the release has been yanked
+            release_body = release.get("body", "") or ""
+            release_name = release.get("name", "") or ""
+            is_yanked = "[yanked]" in release_body.lower() or "[yanked]" in release_name.lower()
+            if is_yanked:
+                assets[name]["yanked"] = "Yanked via release description"
 
     return assets
 
 
-def run_dumb_pypi(assets: dict[str, dict[str, str]], title: str) -> None:
+def run_dumb_pypi(assets: dict[str, AssetInfo], title: str) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         package_list = Path(tmpdir) / "packages.json"
 
         # Write one JSON object per line (dumb-pypi --package-list-json format)
         with package_list.open("w", encoding="utf-8") as f:
             for filename in sorted(assets):
+                asset = assets[filename]
                 entry = {
                     "filename": filename,
-                    "hash": f"sha256={assets[filename]['hash']}",
-                    "upload_timestamp": assets[filename]["upload_timestamp"],
-                    "uploaded_by": "JET",
+                    "hash": f"sha256={asset['hash']}",
+                    "upload_timestamp": asset["upload_timestamp"],
+                    "uploaded_by": "Jaded-Encoding-Thaumaturgy",
                 }
+                if "core_metadata" in asset:
+                    entry["core_metadata"] = asset["core_metadata"]
+                if "requires_python" in asset:
+                    entry["requires_python"] = asset["requires_python"]
+                if "yanked" in asset:
+                    entry["yanked"] = asset["yanked"]
                 json.dump(entry, f)
                 f.write("\n")
 
@@ -130,7 +194,7 @@ def run_dumb_pypi(assets: dict[str, dict[str, str]], title: str) -> None:
     _fixup_urls(assets)
 
 
-def _fixup_urls(assets: dict[str, dict[str, str]]) -> None:
+def _fixup_urls(assets: dict[str, AssetInfo]) -> None:
     extra_style = (
         f"\n<style>.title h1 {{ "
         f"background-size: contain; "
@@ -163,7 +227,7 @@ def main() -> None:
     logger.info("Generating index for %s -> %s", repo, OUTPUT_DIR)
 
     releases = fetch_releases(repo, token)
-    assets = collect_assets(releases)
+    assets = collect_assets(releases, token)
 
     logger.info("Found %s distribution file(s) across %s release(s)", len(assets), len(releases))
 

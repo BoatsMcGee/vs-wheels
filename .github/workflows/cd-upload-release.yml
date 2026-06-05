@@ -48,6 +48,9 @@ jobs:
           echo "Detected version: $VERSION"
           echo "Release tag: $TAG"
 
+      - name: Generate PEP 658 metadata
+        run: python scripts/generate_metadata.py
+
       - name: Create release and upload assets
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:

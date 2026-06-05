@@ -799,6 +799,20 @@ wheels = [
 ]
 
 [[package]]
+name = "tensorrt-cu13-libs"
+version = "11.0.0.114"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/34/869c03b3d4baad93b291a4642d04ec5b1830a985244faef5287df716c71a/tensorrt_cu13_libs-11.0.0.114.tar.gz", hash = "sha256:0476172146eb733ac8a8d9dfb9685022d19dab9b8b7be2e3e1a2571a832283f3", size = 15759, upload-time = "2026-05-27T18:19:03.008Z" }
+
+[[package]]
+name = "tensorrt-rtx-cu13-libs"
+version = "1.5.0.114"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/53/0d0ed9544fb76b88eb19711c9adc2e280790f94f76ecc2371bf9a271dd59/tensorrt_rtx_cu13_libs-1.5.0.114-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:4d6f534f82b701e66f3a2bdade528e65670add4ad5d3a28cc010a1ae2abc5a60", size = 88808916, upload-time = "2026-05-27T01:58:31.473Z" },
+]
+
+[[package]]
 name = "tomli-w"
 version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1010,21 +1024,29 @@ requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
 name = "vapoursynth-mlrt-trt"
 source = { editable = "vsmlrt/trt" }
 dependencies = [
+    { name = "tensorrt-cu13-libs", marker = "sys_platform == 'linux'" },
     { name = "vapoursynth" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
+requires-dist = [
+    { name = "tensorrt-cu13-libs", marker = "sys_platform == 'linux'", specifier = "==11.0.0.114" },
+    { name = "vapoursynth", specifier = ">=75" },
+]
 
 [[package]]
 name = "vapoursynth-mlrt-trt-rtx"
 source = { editable = "vsmlrt/trt_rtx" }
 dependencies = [
+    { name = "tensorrt-rtx-cu13-libs", marker = "sys_platform == 'linux'" },
     { name = "vapoursynth" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
+requires-dist = [
+    { name = "tensorrt-rtx-cu13-libs", marker = "sys_platform == 'linux'", specifier = "==1.5.0.114" },
+    { name = "vapoursynth", specifier = ">=75" },
+]
 
 [[package]]
 name = "vs-wheels"

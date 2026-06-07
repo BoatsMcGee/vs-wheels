@@ -1,25 +1,11 @@
 # Plugins Release Changelog
 
-## bm3dcuda
-
-### Version 2.16.1 (2026-05-25)
-
-- **CUDA Linux**: 13.2
-- **CUDA Windows**: 13.2.1
-
 ## dfttest2
 
 ### Version 10 (2026-05-16)
 
 Matches upstream release v10
 
-
-## dfttest2_nvrtc
-
-### Version 10.1 (2026-05-25)
-
-- **CUDA Windows**: 13.2.1
-- **CUDA Linux**: 13.2
 
 ## vapoursynth-bm3dcpu
 
@@ -30,10 +16,16 @@ Matches upstream R2.16. Requires VapourSynth R75.
 
 ## vapoursynth-bm3dcuda
 
-### Version 2.17.dev1 (2026-05-16)
+### Version 2.16.2 (2026-06-07)
 
+Downgrade CUDA version for Linux because 13.x is segfaulting
+
+- **CUDA Linux**: 12.8
 - **CUDA Windows**: 13.2.1
+### Version 2.16.1 (2026-05-25)
+
 - **CUDA Linux**: 13.2
+- **CUDA Windows**: 13.2.1
 ### Version 2.16 (2026-05-16)
 
 - **CUDA Windows**: 13.0.1
@@ -50,40 +42,34 @@ Matches upstream R2.16. Requires VapourSynth R75.
 - **HIP Windows**: 6.4.2
 - **HIP Linux**: 7.0
 
-## vapoursynth-dfttest2-cpu
+## vapoursynth-dfttest2_cpu
 
 ### Version 10 (2026-05-16)
 
 Matches upstream release v10
 
 
-## vapoursynth-dfttest2-cuda
+## vapoursynth-dfttest2_cuda
 
-### Version 11.dev2 (2026-05-16)
+### Version 10.3.post1 (2026-06-07)
 
-Available on vs-wheels index
-
-### Version 11.dev1 (2026-05-16)
-
-- **CUDA Windows**: 13.2.1
 - **CUDA Linux**: 13.2
+- **CUDA Windows**: 13.2.1
 ### Version 10.2 (2026-05-16)
-
-Available on PyPI
 
 ### Version 10 (2026-05-16)
 
 - **CUDA Windows**: 13.0.1
 - **CUDA Linux**: 13.0
 
-## vapoursynth-dfttest2-gcc
+## vapoursynth-dfttest2_gcc
 
 ### Version 10 (2026-05-16)
 
 Matches upstream release v10
 
 
-## vapoursynth-dfttest2-hip
+## vapoursynth-dfttest2_hip
 
 ### Version 11.dev1 (2026-05-16)
 
@@ -94,7 +80,7 @@ Matches upstream release v10
 - **HIP Windows**: 7.1.1
 - **HIP Linux**: 7.0
 
-## vapoursynth-dfttest2-hiprtc
+## vapoursynth-dfttest2_hiprtc
 
 ### Version 11.dev1 (2026-05-16)
 
@@ -105,9 +91,13 @@ Matches upstream release v10
 - **HIP Windows**: 7.1.1
 - **HIP Linux**: 7.0
 
-## vapoursynth-dfttest2-nvrtc
+## vapoursynth-dfttest2_nvrtc
 
 ### Version 11.dev1 (2026-05-16)
+
+- **CUDA Windows**: 13.2.1
+- **CUDA Linux**: 13.2
+### Version 10.1 (2026-05-25)
 
 - **CUDA Windows**: 13.2.1
 - **CUDA Linux**: 13.2
@@ -123,24 +113,79 @@ Matches upstream release v10
 Compiled with Fast Forward Moving Picture Experts Group 8.1 from the vcpkg 2026.04.27 Release.
 
 
+## vapoursynth-fmtc
+
+### Version 31.post1 (2026-06-07)
+
+Available for Windows, Linux, and macOS
+
+
 ## vapoursynth-fmtconv
+
+### Version 31.post1 (2026-06-07)
+
+Available for Windows, Linux, and macOS
 
 ### Version 31 (2026-05-16)
 
 Matches upstream release R31.
 
 
+## vapoursynth-mlrt-migx
+
+### Version 15.16 (2026-06-07)
+
+- **HIP Linux**: 7.2.4
+
 ## vapoursynth-mlrt-ncnn
 
-### Version 15.16 (2026-05-16)
+### Version 15.16 (2026-06-07)
 
-- **ONNX Windows**: v1.19.0
-- **ONNX Linux**: v1.19.0
+- **ONNX Windows**: v1.21.0
+- **ONNX Linux**: v1.21.0
 - **ONNX macOS**: v1.21.0
-- **NCNN Windows**: 86efe80b50408bfeca79761edcb3fa4b4e513331 (20250503 + 1)
-- **NCNN Linux**: 20250503
-- **NCNN macOS**: 20260113
-- **Vulkan Windows**: 1.4.321.1
-- **Vulkan Linux**: 1.4.321.1
+- **NCNN Windows**: 20260526
+- **NCNN Linux**: 20260526
+- **NCNN macOS**: 20260526
+- **Vulkan Windows**: 1.4.350.0
+- **Vulkan Linux**: 1.4.350.1
 - **Vulkan macOS**: 1.4.350.0
+
+## vapoursynth-mlrt-ort-cuda
+
+### Version 15.16.post2 (2026-06-07)
+
+- **ONNXruntime Windows**: v1.26.0
+- **ONNXruntime Linux**: v1.26.0
+- **CUDA Windows**: 13.0.1
+- **CUDA Linux**: 13.0
+- **cuDNN Windows**: 9.23.0.39
+- **cuDNN Linux**: 9.23.0.39
+
+## vapoursynth-mlrt-ov
+
+### Version 15.16 (2026-06-07)
+
+- **OpenVINO Windows**: 2026.2.0
+- **OpenVINO Linux**: 2026.2.0
+- **OpenVINO macOS Arm64**: 2026.2.0
+- **OpenVINO macOS Intel**: 2026.2.0
+
+## vapoursynth-mlrt-trt
+
+### Version 15.16.post1 (2026-06-07)
+
+- **CUDA Windows**: 13.2.1
+- **CUDA Linux**: 13.2
+- **TensorRT Windows**: 11.0.0.114
+- **TensorRT Linux**: 11.0.0.114-1.cuda13.2
+
+## vapoursynth-mlrt-trt_rtx
+
+### Version 15.16 (2026-06-07)
+
+- **CUDA Windows**: 13.2.1
+- **CUDA Linux**: 13.2
+- **TensorRT RTX Windows**: 1.5.0.114
+- **TensorRT RTX Linux**: 1.5.0.114
 

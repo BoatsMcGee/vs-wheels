@@ -49,7 +49,7 @@ add_library(
   vsort
   SHARED
   vs-mlrt/vsort/vs_onnxruntime.cpp
-  vs-mlrt/vsort/win32.cpp
+  "${PATCHED_WIN32}"
   vs-mlrt/common/onnx_utils.cpp
   vs-mlrt/common/convert_float_to_float16.cpp
 )

@@ -117,7 +117,7 @@ jobs:
           VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
           cat << EOF > metadata.json
           {
-            "package": "${{ env.PACKAGE_NAME }}",
+            "package": "vapoursynth-${{ env.PACKAGE_NAME }}",
             "version": "$VERSION"
           }
           EOF

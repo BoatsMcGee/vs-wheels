@@ -192,7 +192,7 @@ jobs:
           VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
           cat << EOF > metadata.json
           {
-            "package": "${{ env.PACKAGE_NAME }}",
+            "package": "vapoursynth-mlrt-${{ env.PACKAGE_NAME }}",
             "version": "$VERSION",
             "cuda_windows": "${{ env.CUDA_WINDOWS_VERSION }}",
             "cuda_linux": "${{ env.CUDA_LINUX_VERSION }}",

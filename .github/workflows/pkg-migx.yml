@@ -145,7 +145,7 @@ jobs:
           VERSION=$(uvx pkginfo dist/*.tar.gz | grep "^version:" | cut -d' ' -f2)
           cat << EOF > metadata.json
           {
-            "package": "${{ env.PACKAGE_NAME }}",
+            "package": "vapoursynth-mlrt-${{ env.PACKAGE_NAME }}",
             "version": "$VERSION",
             "hip_linux": "${{ env.HIP_LINUX }}"
           }

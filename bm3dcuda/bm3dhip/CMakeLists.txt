@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(BM3DCUDA_Package)
 
-# Define the include path relative to this wrapper
+# === C++ Standard & Options ===
 set(
   VAPOURSYNTH_INCLUDE_DIRECTORY
   "${CMAKE_CURRENT_SOURCE_DIR}/vapoursynth/include"
@@ -9,9 +9,11 @@ set(
   "Path to VapourSynth headers"
 )
 
+# === Target Definition & Configuration ===
 # Add the submodule
 add_subdirectory(VapourSynth-BM3DCUDA)
 
+# === Packaging & Installation ===
 if(WIN32)
   file(TO_CMAKE_PATH "$ENV{HIP_PATH}" HIP_ROOT_DIR)
   if(NOT HIP_ROOT_DIR)

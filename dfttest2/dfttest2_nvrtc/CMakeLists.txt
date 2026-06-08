@@ -32,6 +32,11 @@ if(UNIX)
   target_link_libraries(dfttest2_nvrtc PRIVATE :libcuda.so.1)
 endif()
 
+# Link nvJitLink_static for CUDA 12+ (needed when USE_NVRTC_STATIC is ON)
+find_package(CUDAToolkit REQUIRED)
+target_link_directories(dfttest2_nvrtc PRIVATE "${CUDAToolkit_LIBRARY_DIR}")
+target_link_libraries(dfttest2_nvrtc PRIVATE nvJitLink_static nvptxcompiler_static)
+
 add_custom_target(build_nvrtc ALL DEPENDS dfttest2_nvrtc)
 
 install(TARGETS dfttest2_nvrtc LIBRARY DESTINATION .)

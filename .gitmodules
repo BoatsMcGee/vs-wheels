@@ -94,3 +94,9 @@
 [submodule "vsmlrt/migx/vapoursynth"]
 	path = vsmlrt/migx/vapoursynth
 	url = https://github.com/vapoursynth/vapoursynth.git
+[submodule "atools/atools"]
+	path = atools/atools
+	url = https://github.com/ropagr/VS-AudioTools
+[submodule "ares/ares"]
+	path = ares/ares
+	url = https://github.com/ropagr/VS-AudioResample.git

@@ -13,6 +13,8 @@ dynamic = ["version"]
 
 [dependency-groups]
 dev = [
+    "anyio>=4.13.0",
+    "cyclopts>=4.17.0",
     "dumb-pypi>=1.15.0",
     "gersemi>=0.27.2",
     "mypy>=1.20.2",

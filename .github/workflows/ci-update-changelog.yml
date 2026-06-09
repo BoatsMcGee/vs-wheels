@@ -17,14 +17,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download metadata artifacts
-        shell: pwsh
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
+
+      - name: Update Changelog and Generate Markdown
         env:
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/Download-Metadata.ps1
-
-      - name: Merge JSONs and Generate Markdown
-        run: python scripts/generate_changelog.py
+        run: uv run --script scripts/generate_changelog.py
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1

@@ -9,6 +9,8 @@ resolution-markers = [
 [manifest]
 members = [
     "dfttest2",
+    "vapoursynth-ares",
+    "vapoursynth-atools",
     "vapoursynth-bm3dcpu",
     "vapoursynth-bm3dcuda",
     "vapoursynth-bm3dhip",
@@ -867,6 +869,26 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/c7/422e56e7c41054bacaa26d962eb36e585ba97d71e83de09e7783b65b8241/vapoursynth-76-cp312-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:7078e09f2674e0cd3de08df79462fc29834eb416c0444c2d5d8cd41f0a1c6884", size = 2835477, upload-time = "2026-05-14T16:28:27.178Z" },
     { url = "https://files.pythonhosted.org/packages/20/f3/f24603ae03380831708f7af47a23492fb0e2c61c38a1c4a3b1f31a1e4744/vapoursynth-76-cp312-abi3-win_amd64.whl", hash = "sha256:cb64d4751d05d7256534ef6a7c08f4c665c15216f99b1aafc58bc7ebf46d8ec0", size = 5912918, upload-time = "2026-05-14T16:28:28.892Z" },
 ]
+
+[[package]]
+name = "vapoursynth-ares"
+source = { editable = "ares" }
+dependencies = [
+    { name = "vapoursynth" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
+
+[[package]]
+name = "vapoursynth-atools"
+source = { editable = "atools" }
+dependencies = [
+    { name = "vapoursynth" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "vapoursynth", specifier = ">=75" }]
 
 [[package]]
 name = "vapoursynth-bm3dcpu"

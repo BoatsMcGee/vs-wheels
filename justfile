@@ -35,6 +35,8 @@ build *args:
   }
   foreach ($pkg in $args) {
     switch ($pkg) {
+      "ares"         { & scripts/builds/Build-Ares.ps1 }
+      "atools"       { & scripts/builds/Build-ATools.ps1 }
       "bm3dcpu"      { & scripts/builds/Build-BM3DCPU.ps1 }
       "fmtc"         { & scripts/builds/Build-FMTC.ps1 }
       "dfttest2_cpu" { & scripts/builds/Build-DFTTest2-CPU.ps1 }

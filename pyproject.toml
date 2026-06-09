@@ -40,6 +40,8 @@ bypass-selection = true
 
 [tool.uv.workspace]
 members = [
+    "ares",
+    "atools",
     "bm3dcuda/bm3dcpu",
     "bm3dcuda/bm3dcuda",
     "bm3dcuda/bm3dhip",

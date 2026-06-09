@@ -72,6 +72,14 @@
       "name": "VSMLRT MIGX",
       "path": "vsmlrt/migx",
     },
+    {
+      "name": "ARES",
+      "path": "ares",
+    },
+    {
+      "name": "ATOOLS",
+      "path": "atools",
+    },
   ],
   "settings": {
     "editor.formatOnSave": true,

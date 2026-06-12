@@ -220,6 +220,7 @@ jobs:
     needs: [build-wheels, build-sdist]
     permissions:
       contents: write
+      id-token: write
     uses: ./.github/workflows/cd-upload-release.yml
     with:
       wheel-pattern: dfttest2_cuda-wheels-*

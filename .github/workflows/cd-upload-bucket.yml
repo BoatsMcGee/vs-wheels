@@ -47,5 +47,6 @@ jobs:
 
       - name: Sync to Hugging Face Bucket
         env:
-          HF_OIDC_RESOURCE: Ichunjo/wheel-storage
+          HF_OIDC_RESOURCE: buckets/Ichunjo/wheel-storage
+          HF_DEBUG: 1
         run: uvx hf sync dist hf://buckets/Ichunjo/wheel-storage

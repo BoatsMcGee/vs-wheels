@@ -15,6 +15,11 @@ on:
         description: Name used for release tag and title (e.g., vapoursynth-fmtconv)
         type: string
         required: true
+      upload-hf:
+        description: Upload to Hugging Face bucket
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   upload:
@@ -64,6 +69,26 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: false
 
+  upload-bucket:
+    name: Upload to HuggingFace Bucket
+    needs: upload
+    if: ${{ inputs.upload-hf }}
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/cd-upload-bucket.yml
+    with:
+      wheel-pattern: ${{ inputs.wheel-pattern }}
+      sdist-name: ${{ inputs.sdist-name }}
+
+  trigger-index:
+    name: Trigger Index Update
+    needs: [upload, upload-bucket]
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
       - name: Trigger index update
         env:
           GH_TOKEN: ${{ github.token }}

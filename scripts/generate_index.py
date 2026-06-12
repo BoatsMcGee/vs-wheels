@@ -81,6 +81,23 @@ def fetch_releases(repo: str, token: str | None = None) -> list[dict[str, Any]]:
     return releases
 
 
+def fetch_hf_files(bucket_id: str) -> dict[str, str]:
+    """Fetch the list of files in the Hugging Face bucket and map them to their download URLs."""
+    url = f"https://huggingface.co/api/buckets/{bucket_id}/tree"
+    logger.info("Fetching HuggingFace files list from %s...", url)
+    try:
+        with niquests.get(url) as resp:
+            files = resp.raise_for_status().json()
+            return {
+                item["path"]: f"https://huggingface.co/buckets/{bucket_id}/resolve/{item['path']}"
+                for item in files
+                if item.get("type") == "file"
+            }
+    except Exception as e:
+        logger.warning("Failed to fetch HuggingFace files: %s", e)
+        return {}
+
+
 def fetch_requires_python(asset: dict[str, Any], token: str | None) -> str | None:
     """Fetch and parse the Requires-Python header from the metadata asset."""
     headers = dict[str, str]()
@@ -223,11 +240,21 @@ def main() -> None:
     repo = os.environ.get("GITHUB_REPOSITORY", "Jaded-Encoding-Thaumaturgy/vs-wheels")
     token = os.environ.get("GITHUB_TOKEN")
     title = os.environ.get("INDEX_TITLE", "JET Package Index")
+    bucket_id = os.environ.get("HF_BUCKET", "Ichunjo/wheel-storage")
 
     logger.info("Generating index for %s -> %s", repo, OUTPUT_DIR)
 
     releases = fetch_releases(repo, token)
     assets = collect_assets(releases, token)
+
+    hf_files = fetch_hf_files(bucket_id)
+
+    for name, asset in assets.items():
+        if name in hf_files:
+            logger.info("Using HuggingFace URL for %s", name)
+            asset["url"] = hf_files[name]
+        else:
+            logger.info("Using GitHub URL for %s (not found in HF bucket)", name)
 
     logger.info("Found %s distribution file(s) across %s release(s)", len(assets), len(releases))
 

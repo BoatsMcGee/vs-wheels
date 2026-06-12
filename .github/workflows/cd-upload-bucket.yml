@@ -1,0 +1,49 @@
+name: Upload to HuggingFace Bucket
+
+on:
+  workflow_call:
+    inputs:
+      wheel-pattern:
+        description: Pattern for wheel artifacts
+        type: string
+        required: true
+      sdist-name:
+        description: Name for sdist artifact
+        type: string
+        required: true
+
+jobs:
+  upload-bucket:
+    name: Upload to HF Bucket
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: false
+
+      - name: Download wheels
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: ${{ inputs.wheel-pattern }}
+          path: dist
+          merge-multiple: true
+
+      - name: Download sdist
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: ${{ inputs.sdist-name }}
+          path: dist
+
+      - name: Generate PEP 658 metadata
+        run: uv run scripts/generate_metadata.py
+
+      - name: Sync to Hugging Face Bucket
+        run: uv run --script scripts/upload_bucket.py

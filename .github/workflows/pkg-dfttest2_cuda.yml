@@ -225,3 +225,4 @@ jobs:
       wheel-pattern: dfttest2_cuda-wheels-*
       sdist-name: dfttest2_cuda-sdist
       display-name: vapoursynth-dfttest2_cuda
+      upload-hf: true

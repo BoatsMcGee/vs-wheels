@@ -46,4 +46,6 @@ jobs:
         run: uv run scripts/generate_metadata.py
 
       - name: Sync to Hugging Face Bucket
-        run: uv run --script scripts/upload_bucket.py
+        env:
+          HF_OIDC_RESOURCE: Ichunjo/wheel-storage
+        run: uvx hf sync dist hf://buckets/Ichunjo/wheel-storage

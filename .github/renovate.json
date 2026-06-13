@@ -12,12 +12,26 @@
     ":semanticCommitScopeDisabled",
     ":semanticCommitTypeAll(deps)"
   ],
+  "pep723": {
+    "managerFilePatterns": [
+      "**/cuda_pyproject.py",
+      "scripts/*.py",
+      "check_release.py"
+    ]
+  },
   "customManagers": [
     {
       "customType": "regex",
       "managerFilePatterns": ["/^\\.github/workflows/pkg-.*\\.yml$/"],
       "matchStrings": [
         "(?:default:|\\|\\|)\\s+['\"](?<currentValue>[a-zA-Z0-9\\.]+)(?:[-+][^'\"]+)?['\"].*?# renovate: datasource=(?<datasource>[a-z-\\.]+) depName=(?<depName>[^\\s]+)(?: versioning=(?<versioning>[^\\s]+))?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["**/cuda_pyproject.py"],
+      "matchStrings": [
+        "['\"][a-zA-Z0-9-._]+(?<currentValue>[>=<~0-9a-zA-Z-._*, ]+)['\"],?\\s+# renovate: datasource=(?<datasource>[a-z-\\.]+) depName=(?<depName>[^\\s]+)(?: versioning=(?<versioning>[^\\s]+))?"
       ]
     }
   ],

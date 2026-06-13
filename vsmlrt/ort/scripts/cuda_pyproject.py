@@ -19,17 +19,13 @@ def main(pyproject: Path) -> None:
     data["tool"]["scikit-build"]["wheel"]["install-dir"] += "-cuda"
     data["project"]["dependencies"].extend(
         [
-            # TODO: Keep in sync with .github/workflows/pkg-ort-cuda.yml and current CUDA Toolkit release notes
-            # CUDA 13.0 is currently the maximum supported by ONNX Runtime
-            # https://docs.nvidia.com/cuda/archive/13.0.3/cuda-toolkit-release-notes/index.html
-            "nvidia-cublas~=13.1.1",
-            "nvidia-cuda-runtime~=13.0.96",
-            "nvidia-cudnn-cu13~=9.23.1",  # renovate: datasource=pypi depName=nvidia-cudnn-cu13
-            "nvidia-cufft~=12.0.0",
-            "nvidia-cuda-cupti~=13.0.85",
-            "nvidia-cuda-nvrtc~=13.0.88",
-            "nvidia-nvjitlink~=13.0.88",
-            "nvidia-curand~=10.4.0.35",
+            "nvidia-cublas>=13.0.0,<14.0.0",  # renovate: datasource=pypi depName=nvidia-cublas
+            "nvidia-cuda-runtime>=13.0.0,<14.0.0",  # renovate: datasource=pypi depName=nvidia-cuda-runtime
+            "nvidia-cudnn-cu13>=9.0.0,<10.0.0",  # renovate: datasource=pypi depName=nvidia-cudnn-cu13
+            "nvidia-cufft>=12.0.0,<13.0.0",  # renovate: datasource=pypi depName=nvidia-cufft
+            "nvidia-cuda-cupti>=13.0.0,<14.0.0",  # renovate: datasource=pypi depName=nvidia-cuda-cupti
+            "nvidia-cuda-nvrtc>=13.0.0,<14.0.0",  # renovate: datasource=pypi depName=nvidia-cuda-nvrtc
+            "nvidia-curand>=10.0.0,<11.0.0",  # renovate: datasource=pypi depName=nvidia-curand
         ]
     )
 

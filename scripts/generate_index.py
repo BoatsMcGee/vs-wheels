@@ -34,7 +34,7 @@ class AssetInfo(TypedDict, total=False):
     upload_timestamp: Required[int]
     core_metadata: NotRequired[str]
     requires_python: NotRequired[str]
-    yanked: NotRequired[str]
+    yanked_reason: NotRequired[str]
 
 
 console = rich.console.Console(
@@ -165,7 +165,7 @@ def collect_assets(releases: list[dict[str, Any]], token: str | None = None) -> 
             release_name = release.get("name", "") or ""
             is_yanked = "[yanked]" in release_body.lower() or "[yanked]" in release_name.lower()
             if is_yanked:
-                assets[name]["yanked"] = "Yanked via release description"
+                assets[name]["yanked_reason"] = "Yanked via release description"
 
     return assets
 
@@ -188,8 +188,8 @@ def run_dumb_pypi(assets: dict[str, AssetInfo], title: str) -> None:
                     entry["core_metadata"] = asset["core_metadata"]
                 if "requires_python" in asset:
                     entry["requires_python"] = asset["requires_python"]
-                if "yanked" in asset:
-                    entry["yanked"] = asset["yanked"]
+                if "yanked_reason" in asset:
+                    entry["yanked_reason"] = asset["yanked_reason"]
                 json.dump(entry, f)
                 f.write("\n")
 

@@ -98,15 +98,26 @@ class Downloader:
                 if not metadata_artifact:
                     continue
 
+                if metadata_artifact.get("expired", False):
+                    logger.debug("Metadata artifact for run %s has expired", run_id)
+                    continue
+
                 download_url = metadata_artifact["archive_download_url"]
                 dl_response = await self.session.get(download_url)
+                if dl_response.status_code != 200:
+                    logger.error("Failed to download artifact for run %s: HTTP %s", run_id, dl_response.status_code)
+                    continue
                 assert dl_response.content
 
                 wf_dir = metadata_dir / anyio.Path(wf).stem
                 await wf_dir.mkdir(parents=True, exist_ok=True)
 
-                with zipfile.ZipFile(io.BytesIO(dl_response.content)) as z:
-                    z.extractall(wf_dir)
+                try:
+                    with zipfile.ZipFile(io.BytesIO(dl_response.content)) as z:
+                        z.extractall(wf_dir)
+                except zipfile.BadZipFile:
+                    logger.error("Downloaded metadata from run %s for %s is not a valid ZIP file", run_id, wf)
+                    continue
 
                 async for jf in wf_dir.glob("**/*.json"):
                     data = json.loads(await jf.read_text())

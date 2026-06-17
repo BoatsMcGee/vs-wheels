@@ -51,7 +51,7 @@ set_target_properties(
 
 if(UNIX)
   if(APPLE)
-    set_target_properties(vsncnn PROPERTIES INSTALL_RPATH "@loader_path")
+    set_target_properties(vsncnn PROPERTIES INSTALL_RPATH "@loader_path;/opt/homebrew/lib;/usr/local/lib")
   else()
     set_target_properties(vsncnn PROPERTIES INSTALL_RPATH "$ORIGIN")
   endif()

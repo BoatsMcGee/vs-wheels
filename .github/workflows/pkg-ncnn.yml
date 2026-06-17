@@ -206,7 +206,7 @@ jobs:
         run: |
           uv tool install delocate
           echo "Dependencies of wheel before repair:" && delocate-listdeps dist/*.whl
-          delocate-wheel -v --exclude libvulkan dist/*.whl -w repaired_wheels
+          delocate-wheel -v --exclude libvulkan --no-sanitize-rpaths dist/*.whl -w repaired_wheels
           rm dist/*.whl
           mv repaired_wheels/*.whl dist/
           echo "Dependencies of wheel after repair:" && delocate-listdeps dist/*.whl

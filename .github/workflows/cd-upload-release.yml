@@ -69,21 +69,22 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: false
 
-  upload-bucket:
-    name: Upload to HuggingFace Bucket
-    needs: upload
-    if: ${{ inputs.upload-hf }}
-    permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/cd-upload-bucket.yml
-    with:
-      wheel-pattern: ${{ inputs.wheel-pattern }}
-      sdist-name: ${{ inputs.sdist-name }}
+  # upload-bucket:
+  #   name: Upload to HuggingFace Bucket
+  #   needs: upload
+  #   if: ${{ inputs.upload-hf }}
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   uses: ./.github/workflows/cd-upload-bucket.yml
+  #   with:
+  #     wheel-pattern: ${{ inputs.wheel-pattern }}
+  #     sdist-name: ${{ inputs.sdist-name }}
 
   trigger-index:
     name: Trigger Index Update
-    needs: [upload, upload-bucket]
+    # needs: [upload, upload-bucket]
+    needs: [upload]
     if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     permissions:

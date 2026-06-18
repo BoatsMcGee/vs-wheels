@@ -170,6 +170,10 @@ jobs:
         with:
           tensorrt-version: ${{ env.TENSORRT_LINUX_AARCH64_VERSION }}
           tensorrt-components: >-
+            libnvinfer11,
+            libnvinfer-plugin11,
+            libnvinfer-dispatch11,
+            libnvinfer-lean11,
             libnvinfer-dev,
             libnvinfer-plugin-dev,
             libnvinfer-dispatch-dev,

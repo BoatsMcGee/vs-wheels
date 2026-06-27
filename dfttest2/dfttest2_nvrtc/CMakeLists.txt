@@ -40,6 +40,9 @@ endif()
 # Link nvJitLink_static for CUDA 12+ (needed when USE_NVRTC_STATIC is ON)
 target_link_directories(dfttest2_nvrtc PRIVATE "${CUDAToolkit_LIBRARY_DIR}")
 target_link_libraries(dfttest2_nvrtc PRIVATE nvJitLink_static nvptxcompiler_static)
+if(WIN32)
+  target_link_libraries(dfttest2_nvrtc PRIVATE ntdll)
+endif()
 
 # === Packaging & Installation ===
 install(TARGETS dfttest2_nvrtc LIBRARY DESTINATION .)

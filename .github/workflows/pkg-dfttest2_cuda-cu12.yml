@@ -99,7 +99,9 @@ jobs:
           $extractDir = "wheel_extracted"
           Expand-Archive -LiteralPath $whl.FullName -DestinationPath $extractDir -Force
           $cudaBin = "$env:CUDA_PATH\bin"
-          $destDir = "$extractDir\platlib\vapoursynth\plugins\dfttest2_cuda"
+          $destDir = Get-ChildItem -Path $extractDir -Recurse -Filter "dfttest2_cuda*" -Directory | Select-Object -First 1
+          if (-not $destDir) { throw "Could not find dfttest2_cuda directory in extracted wheel" }
+          Write-Host "Destination directory: $($destDir.FullName)"
           $cudaDlls = @(
             "cufft64_11.dll",
             "cufftw64_11.dll",
@@ -111,7 +113,7 @@ jobs:
           foreach ($dll in $cudaDlls) {
             $src = Join-Path $cudaBin $dll
             if (Test-Path $src) {
-              Copy-Item $src -Destination $destDir -Force
+              Copy-Item $src -Destination $destDir.FullName -Force
               Write-Host "Copied $dll"
             } else {
               Write-Host "NOT FOUND: $src"

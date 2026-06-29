@@ -5,12 +5,7 @@
 .DESCRIPTION
     Locates the latest Visual Studio installation and imports the DevShell module.
     Sets up the environment for x64 development by default.
-    Optionally pins a specific MSVC toolset version (e.g. "14.39").
 #>
-
-param(
-    [string]$MsvcToolsetVersion = ""
-)
 
 $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
 
@@ -27,13 +22,6 @@ if (-not (Test-Path $devShellDll)) {
 }
 
 Import-Module $devShellDll
-
-$devCmdArgs = '-arch=x64'
-if ($MsvcToolsetVersion) {
-    $devCmdArgs += " -vcvars_ver=$MsvcToolsetVersion"
-    Write-Host "Pinning MSVC toolset version: $MsvcToolsetVersion" -ForegroundColor Yellow
-}
-
-Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments $devCmdArgs
+Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64'
 
 Write-Host "Developer Environment Loaded (x64) from $vsPath" -ForegroundColor Green

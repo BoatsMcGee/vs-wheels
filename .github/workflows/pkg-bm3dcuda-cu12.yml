@@ -32,7 +32,6 @@ on:
         default: windows-2022
         options:
           - windows-2022
-          - windows-2025
   workflow_call:
     inputs:
       version:
@@ -57,7 +56,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ${{ inputs.windows-runner || 'windows-2022' }}
+          - os: windows-2022
             arch: amd64
 
     name: Build wheels on ${{ matrix.os }}
@@ -80,8 +79,6 @@ jobs:
 
       - name: Setup MSVC
         uses: ./.github/actions/setup-msvc
-        with:
-          msvc-version: "14.29"
 
       - name: Setup CUDA (Windows)
         uses: ./.github/actions/setup-cuda-windows-cu12

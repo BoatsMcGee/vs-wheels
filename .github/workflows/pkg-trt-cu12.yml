@@ -107,7 +107,7 @@ jobs:
         uses: ./.github/actions/setup-tensorrt-windows
         with:
           tensorrt-version: ${{ env.TENSORRT_WINDOWS_VERSION }}
-          cuda-version: "12.8"
+          cuda-version: "13.2.1"
           cache-key: ${{ matrix.os }}
 
       - name: Build wheel

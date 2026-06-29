@@ -91,6 +91,7 @@ jobs:
         run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CUDA: ${{ inputs.version }}
+          CMAKE_CUDA_FLAGS: "-allow-unsupported-compiler"
 
       - name: Extract DLL from wheel and copy CUDA dependencies (Windows)
         shell: pwsh

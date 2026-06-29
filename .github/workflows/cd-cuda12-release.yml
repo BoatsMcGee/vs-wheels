@@ -16,7 +16,7 @@ on:
         description: TensorRT version for Windows
         type: string
         required: false
-        default: "11.1.0.106"
+        default: "11.0.0.114"
       tensorrt-rtx-windows:
         description: TensorRT-RTX version for Windows
         type: string

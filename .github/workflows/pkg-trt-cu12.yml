@@ -169,27 +169,3 @@ jobs:
           name: ${{ env.PACKAGE_NAME }}-sdist-cu12
           path: dist/*.tar.gz
 
-  trigger-publish:
-    name: Trigger publish
-    if: github.event_name == 'workflow_dispatch' && inputs.publish == true
-    needs: [build-wheels, build-sdist]
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-
-    steps:
-      - name: Trigger publish workflow
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
-        run: >-
-          gh workflow run cd-publish.yml
-          -f artifact-pattern=${{ env.PACKAGE_NAME }}-cu12-*
-          -f package=vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
-          -f packages-dir=dist
-          -f repository=${{ inputs.repository }}
-          -f repository-url="$REPOSITORY_URL"
-          -f run-id=${{ github.run_id }}
-          --ref ${{ github.ref_name }}

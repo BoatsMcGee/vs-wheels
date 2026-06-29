@@ -98,7 +98,7 @@ jobs:
           uv tool install ninja
 
       - name: Setup CUDA (Windows)
-        uses: ./.github/actions/setup-cuda-windows
+        uses: ./.github/actions/setup-cuda-windows-cu12
         with:
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
           cuda-components: >-

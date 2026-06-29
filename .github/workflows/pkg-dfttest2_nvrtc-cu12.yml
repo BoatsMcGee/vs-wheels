@@ -82,7 +82,7 @@ jobs:
         uses: ./.github/actions/setup-msvc
 
       - name: Setup CUDA (Windows)
-        uses: ./.github/actions/setup-cuda-windows
+        uses: ./.github/actions/setup-cuda-windows-cu12
         with:
           cuda-version: ${{ env.CUDA_WINDOWS }}
           cuda-components: "nvcc, cudart, nvrtc_dev, nvjitlink, cufft, cufft_dev, crt, nvptxcompiler"

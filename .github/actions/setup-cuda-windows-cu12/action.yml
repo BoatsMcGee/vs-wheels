@@ -1,0 +1,94 @@
+name: "Setup CUDA 12 (Windows - Local Installer)"
+description: "Downloads, caches, and installs NVIDIA CUDA 12 using the local (offline) installer for Windows"
+inputs:
+  cuda-version:
+    description: "CUDA version (e.g., 12.9.2)"
+    required: true
+  cuda-components:
+    description: "Comma-separated list of CUDA components to install"
+    required: true
+  cache-key:
+    description: "Extra cache key part"
+    required: false
+    default: "default"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure CUDA Path (Windows)
+      shell: pwsh
+      run: |
+        $cudaVersion = "${{ inputs.cuda-version }}"
+        $cudaShort = $cudaVersion -replace '\.\d+$', ''
+        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$cudaShort"
+
+        "CUDA_PATH=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "CUDA_VERSION_WINDOWS=$cudaVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "CUDA_VERSION_WINDOWS_SHORT=$cudaShort" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+        $componentsSafe = "${{ inputs.cuda-components }}" -replace ',', '-' -replace ' ', ''
+
+        "CUDA_COMPONENTS=$componentsSafe" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "CUDAToolkit_ROOT=$cudaPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "$cudaPath\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+    - name: Cache CUDA (Windows)
+      id: cache-cuda
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA
+        key: setup-cuda-windows-local-${{ runner.os }}-${{ inputs.cuda-version }}-${{ env.CUDA_COMPONENTS }}-${{ inputs.cache-key }}
+
+    - name: Setup CUDA (Windows - Local Installer)
+      if: steps.cache-cuda.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: |
+        $cudaVersion = $env:CUDA_VERSION_WINDOWS
+        $cudaShort = $env:CUDA_VERSION_WINDOWS_SHORT
+
+        # Local installer URL for CUDA 12.9.2
+        # Format: https://developer.download.nvidia.com/compute/cuda/{version}/local_installers/cuda_{version}_{driver_version}_windows.exe
+        $installerUrl = "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/local_installers/cuda_${cudaVersion}_576.57_windows.exe"
+
+        Write-Host "Downloading CUDA $cudaVersion local installer from: $installerUrl"
+        curl.exe -s -o cuda_installer.exe -L $installerUrl
+
+        if (-not (Test-Path cuda_installer.exe) -or (Get-Item cuda_installer.exe).Length -lt 1MB) {
+          Write-Error "Failed to download CUDA installer. The file is missing or too small."
+          exit 1
+        }
+
+        $fileSizeMB = [math]::Round((Get-Item cuda_installer.exe).Length / 1MB, 1)
+        Write-Host "Downloaded installer size: ${fileSizeMB} MB"
+
+        # Install specific components silently using -s flag
+        $components = "${{ inputs.cuda-components }}".Split(',') | ForEach-Object { $_.Trim() }
+        $installArgs = @("-s")
+        foreach ($comp in $components) {
+            $installArgs += "${comp}_$cudaShort"
+        }
+
+        Write-Host "Installing CUDA with args: $($installArgs -join ' ')"
+        Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait
+
+        # Verify installation
+        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$cudaShort"
+        if (Test-Path $cudaPath) {
+          Write-Host "CUDA installed successfully at: $cudaPath"
+          $nvcc = Get-ChildItem -Path "$cudaPath\bin\nvcc.exe" -ErrorAction SilentlyContinue
+          if ($nvcc) {
+            Write-Host "nvcc found: $($nvcc.FullName)"
+          } else {
+            Write-Warning "nvcc not found in $cudaPath\bin"
+          }
+        } else {
+          Write-Error "CUDA installation directory not found at: $cudaPath"
+          exit 1
+        }
+
+    - name: Cache CUDA (Windows)
+      if: steps.cache-cuda.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA
+        key: setup-cuda-windows-local-${{ runner.os }}-${{ inputs.cuda-version }}-${{ env.CUDA_COMPONENTS }}-${{ inputs.cache-key }}

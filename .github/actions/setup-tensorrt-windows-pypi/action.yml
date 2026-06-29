@@ -1,11 +1,11 @@
 name: Setup TensorRT (Windows - PyPI)
-description: Installs NVIDIA TensorRT for Windows from PyPI (no NVIDIA login required)
+description: Installs NVIDIA TensorRT for Windows from PyPI + GitHub headers (no NVIDIA login required)
 inputs:
   tensorrt-version:
-    description: TensorRT version (e.g., 11.1.0.106)
+    description: TensorRT version (e.g., 10.13.2.6)
     required: true
   cuda-version:
-    description: CUDA version (e.g., 12.9.2) - used for cache key only
+    description: CUDA major.minor version (e.g., 12.9) - used to select cu12/cu13 variant
     required: true
   cache-key:
     description: Extra cache key part
@@ -15,62 +15,104 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install TensorRT from PyPI
+    - name: Install TensorRT libs from PyPI
       shell: pwsh
       run: |
         $fullTrtVer = "${{ inputs.tensorrt-version }}"
-        Write-Host "Installing TensorRT $fullTrtVer from PyPI..."
+        $cudaMajor = "${{ inputs.cuda-version }}".Split(".")[0]
 
-        pip install "tensorrt==$fullTrtVer" --target tensorrt_pkg --extra-index-url https://pypi.nvidia.com/
+        Write-Host "Installing TensorRT $fullTrtVer (CUDA $cudaMajor) from PyPI..."
+
+        # Install the runtime DLLs from PyPI
+        pip install "tensorrt_cu${cudaMajor}_libs==$fullTrtVer" --target tensorrt_pkg --extra-index-url https://pypi.nvidia.com/
         if ($LASTEXITCODE -ne 0) {
-          Write-Error "Failed to install TensorRT $fullTrtVer from PyPI"
+          Write-Error "Failed to install TensorRT libs from PyPI"
           exit 1
         }
 
-        Write-Host "TensorRT installed successfully"
-        Get-ChildItem tensorrt_pkg -Depth 1 | ForEach-Object { Write-Host "  $($_.Name)" }
+        Write-Host "TensorRT libs installed successfully"
+
+    - name: Download TensorRT headers from GitHub
+      shell: pwsh
+      run: |
+        $fullTrtVer = "${{ inputs.tensorrt-version }}"
+        $shortVer = $fullTrtVer -replace '\.\d+$', ''
+
+        # Download the TensorRT source release from GitHub
+        $headersUrl = "https://github.com/NVIDIA/TensorRT/archive/refs/tags/v$shortVer.zip"
+        Write-Host "Downloading TensorRT headers from $headersUrl"
+
+        curl.exe -L -o trt_headers.zip $headersUrl
+        if (-not (Test-Path trt_headers.zip) -or (Get-Item trt_headers.zip).Length -lt 1MB) {
+          Write-Error "Failed to download TensorRT headers"
+          exit 1
+        }
+
+        Write-Host "Extracting TensorRT headers..."
+        Expand-Archive -LiteralPath trt_headers.zip -DestinationPath . -Force
+
+        # Find the include directory in the extracted source
+        $srcDir = (Get-ChildItem -Path "TensorRT-*" -Directory | Select-Object -First 1).FullName
+        $includeSrc = Join-Path $srcDir "include"
+
+        if (Test-Path $includeSrc) {
+          # Copy headers to a known location
+          if (Test-Path "trt_include") { Remove-Item "trt_include" -Recurse -Force }
+          Move-Item $includeSrc trt_include
+          Write-Host "TensorRT headers extracted to ./trt_include/"
+          Get-ChildItem trt_include | Select-Object -First 10 | ForEach-Object { Write-Host "  $($_.Name)" }
+        } else {
+          Write-Warning "No include directory found in TensorRT source"
+        }
+
+        # Clean up
+        Remove-Item trt_headers.zip -Force -ErrorAction SilentlyContinue
+        if (Test-Path $srcDir) { Remove-Item $srcDir -Recurse -Force -ErrorAction SilentlyContinue }
+
+    - name: Setup TensorRT directory structure
+      shell: pwsh
+      run: |
+        # Create a unified TENSORRT_HOME with include/ and lib/ subdirectories
+        # The CMakeLists.txt expects:
+        #   TENSORRT_HOME/include/NvInferVersion.h
+        #   TENSORRT_HOME/lib/nvinfer_11.dll (or similar)
+
+        New-Item -ItemType Directory -Force -Path "tensorrt_home\include" | Out-Null
+        New-Item -ItemType Directory -Force -Path "tensorrt_home\lib" | Out-Null
+
+        # Copy headers
+        if (Test-Path "trt_include") {
+          Copy-Item "trt_include\*" "tensorrt_home\include\" -Recurse -Force
+          Write-Host "Copied headers to tensorrt_home/include/"
+        }
+
+        # Copy DLLs from the PyPI package
+        $trtLibs = Get-ChildItem -Path "tensorrt_pkg" -Directory -Filter "tensorrt_libs" | Select-Object -First 1
+        if ($trtLibs) {
+          # DLLs are directly in tensorrt_libs/, copy them to lib/
+          Copy-Item "$($trtLibs.FullName)\*.dll" "tensorrt_home\lib\" -Force
+          Write-Host "Copied DLLs from $($trtLibs.FullName) to tensorrt_home/lib/"
+        } else {
+          # Fallback: search for DLLs recursively
+          $dlls = Get-ChildItem -Path "tensorrt_pkg" -Recurse -Filter "nvinfer*.dll"
+          foreach ($dll in $dlls) {
+            Copy-Item $dll.FullName "tensorrt_home\lib\" -Force
+          }
+          Write-Host "Copied $($dlls.Count) DLLs to tensorrt_home/lib/"
+        }
+
+        # Verify
+        Write-Host "TENSORRT_HOME structure:"
+        Write-Host "  include/:"
+        Get-ChildItem "tensorrt_home\include" | Select-Object -First 10 | ForEach-Object { Write-Host "    $($_.Name)" }
+        Write-Host "  lib/:"
+        Get-ChildItem "tensorrt_home\lib" | ForEach-Object { Write-Host "    $($_.Name)" }
 
     - name: Configure TensorRT Paths
       shell: pwsh
       run: |
-        $trtPkg = (Resolve-Path "tensorrt_pkg").Path
-
-        # The PyPI tensorrt package has the SDK under tensorrt-<version>.data/
-        $dataDir = Get-ChildItem -Path $trtPkg -Directory -Filter "tensorrt-*.data" | Select-Object -First 1
-        if ($dataDir) {
-          $trtHome = Join-Path $dataDir.FullName "data"
-          if (-not (Test-Path (Join-Path $trtHome "lib"))) {
-            # Try the data directory itself
-            if (Test-Path (Join-Path $dataDir.FullName "lib")) {
-              $trtHome = $dataDir.FullName
-            }
-          }
-        }
-
-        # Fallback: look for the tensorrt directory directly in the package
-        if (-not $trtHome) {
-          $trtDir = Get-ChildItem -Path $trtPkg -Directory -Filter "tensorrt" | Select-Object -First 1
-          if ($trtDir) {
-            $trtHome = $trtDir.FullName
-          } else {
-            $trtHome = $trtPkg
-          }
-        }
+        $trtHome = (Resolve-Path "tensorrt_home").Path
 
         Write-Host "TENSORRT_HOME=$trtHome"
         "TENSORRT_HOME=$trtHome" | Out-File -FilePath $env:GITHUB_ENV -Append
         "TENSORRT_PATH=$trtHome" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-        # List what we found for debugging
-        if (Test-Path (Join-Path $trtHome "lib")) {
-          Write-Host "TensorRT lib contents:"
-          Get-ChildItem (Join-Path $trtHome "lib") | ForEach-Object { Write-Host "  $($_.Name)" }
-        } else {
-          Write-Warning "No lib directory found in $trtHome"
-          Write-Host "Directory structure:"
-          Get-ChildItem $trtPkg -Recurse -Depth 2 | Select-Object -First 30 | ForEach-Object { Write-Host "  $($_.FullName)" }
-        }
-        if (Test-Path (Join-Path $trtHome "include")) {
-          Write-Host "TensorRT include contents:"
-          Get-ChildItem (Join-Path $trtHome "include") | Select-Object -First 10 | ForEach-Object { Write-Host "  $($_.Name)" }
-        }

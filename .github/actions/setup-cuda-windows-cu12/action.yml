@@ -69,10 +69,18 @@ runs:
         }
 
         Write-Host "Installing CUDA with args: $($installArgs -join ' ')"
-        Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait
+        $proc = Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait -PassThru
+        Write-Host "Installer exit code: $($proc.ExitCode)"
+
+        # If component-specific install failed, try installing everything
+        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$cudaShort"
+        if (($proc.ExitCode -ne 0) -or -not (Test-Path $cudaPath)) {
+          Write-Warning "Component-specific install failed (exit code: $($proc.ExitCode)). Trying full install with -s ..."
+          $proc2 = Start-Process ./cuda_installer.exe -ArgumentList "-s" -Wait -PassThru
+          Write-Host "Full install exit code: $($proc2.ExitCode)"
+        }
 
         # Verify installation
-        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$cudaShort"
         if (Test-Path $cudaPath) {
           Write-Host "CUDA installed successfully at: $cudaPath"
           $nvcc = Get-ChildItem -Path "$cudaPath\bin\nvcc.exe" -ErrorAction SilentlyContinue
@@ -80,9 +88,18 @@ runs:
             Write-Host "nvcc found: $($nvcc.FullName)"
           } else {
             Write-Warning "nvcc not found in $cudaPath\bin"
+            Write-Host "Contents of $cudaPath\bin:"
+            Get-ChildItem "$cudaPath\bin" | Select-Object -First 20 | ForEach-Object { Write-Host "  $($_.Name)" }
           }
         } else {
           Write-Error "CUDA installation directory not found at: $cudaPath"
+          Write-Host "Checking what exists under NVIDIA GPU Computing Toolkit:"
+          $parentDir = "C:\Program Files\NVIDIA GPU Computing Toolkit"
+          if (Test-Path $parentDir) {
+            Get-ChildItem $parentDir -Recurse -Depth 2 | ForEach-Object { Write-Host "  $($_.FullName)" }
+          } else {
+            Write-Host "Parent directory $parentDir does not exist either."
+          }
           exit 1
         }
 

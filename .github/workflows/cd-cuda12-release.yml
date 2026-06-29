@@ -1,0 +1,134 @@
+name: CUDA12 Combined Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version override for all packages (SETUPTOOLS_SCM_PRETEND_VERSION)
+        type: string
+        required: true
+      cuda-windows:
+        description: CUDA version for Windows
+        type: string
+        required: false
+        default: "12.9.2"
+      tensorrt-windows:
+        description: TensorRT version for Windows
+        type: string
+        required: false
+        default: "10.13.2.6"
+      tensorrt-rtx-windows:
+        description: TensorRT-RTX version for Windows
+        type: string
+        required: false
+        default: "1.5.0.114"
+      windows-runner:
+        description: Windows runner to use
+        type: choice
+        required: true
+        default: windows-2025
+        options:
+          - windows-2025
+          - windows-2022
+
+jobs:
+  build-bm3dcuda:
+    uses: ./.github/workflows/pkg-bm3dcuda-cu12.yml
+    with:
+      version: ${{ inputs.version }}
+      cuda-windows: ${{ inputs.cuda-windows }}
+      windows-runner: ${{ inputs.windows-runner }}
+
+  build-dfttest2-cuda:
+    uses: ./.github/workflows/pkg-dfttest2_cuda-cu12.yml
+    with:
+      version: ${{ inputs.version }}
+      cuda-windows: ${{ inputs.cuda-windows }}
+      windows-runner: ${{ inputs.windows-runner }}
+
+  build-dfttest2-nvrtc:
+    uses: ./.github/workflows/pkg-dfttest2_nvrtc-cu12.yml
+    with:
+      version: ${{ inputs.version }}
+      cuda-windows: ${{ inputs.cuda-windows }}
+      windows-runner: ${{ inputs.windows-runner }}
+
+  build-trt:
+    uses: ./.github/workflows/pkg-trt-cu12.yml
+    with:
+      version: ${{ inputs.version }}
+      cuda-windows: ${{ inputs.cuda-windows }}
+      tensorrt-windows: ${{ inputs.tensorrt-windows }}
+      windows-runner: ${{ inputs.windows-runner }}
+
+  build-trt-rtx:
+    uses: ./.github/workflows/pkg-trt-rtx-cu12.yml
+    with:
+      version: ${{ inputs.version }}
+      cuda-windows: ${{ inputs.cuda-windows }}
+      tensorrt-rtx-windows: ${{ inputs.tensorrt-rtx-windows }}
+      windows-runner: ${{ inputs.windows-runner }}
+
+  create-release:
+    name: Create CUDA12 Release
+    needs: [build-bm3dcuda, build-dfttest2-cuda, build-dfttest2-nvrtc, build-trt, build-trt-rtx]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - name: Download all cu12 artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: "*-cu12-*"
+          path: dist
+          merge-multiple: true
+
+      - name: Remove metadata.json files
+        run: rm -f dist/metadata.json
+
+      - name: List all release assets
+        run: |
+          echo "=== Release assets ==="
+          ls -la dist/
+
+      - name: Determine version
+        id: version
+        run: |
+          WHEEL=$(ls dist/*.whl 2>/dev/null | head -1)
+          if [ -n "$WHEEL" ]; then
+            VERSION=$(basename "$WHEEL" | sed 's/^[^-]*-\([^-]*\)-.*/\1/')
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "Detected version: $VERSION"
+          else
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "Using input version: ${{ inputs.version }}"
+          fi
+
+      - name: Create release and upload assets
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3
+        with:
+          tag_name: "cuda12-${{ steps.version.outputs.version }}"
+          name: "CUDA 12 Builds ${{ steps.version.outputs.version }}"
+          files: dist/*
+          body: |-
+            CUDA 12.9.2 alternative builds for Windows.
+
+            **CUDA version:** ${{ inputs.cuda-windows }}
+            **TensorRT version:** ${{ inputs.tensorrt-windows }}
+            **TensorRT-RTX version:** ${{ inputs.tensorrt-rtx-windows }}
+
+            ## Packages
+            - bm3dcuda
+            - dfttest2_cuda
+            - dfttest2_nvrtc
+            - mlrt-trt
+            - mlrt-trt-rtx
+
+            ## Contents
+            Each package includes the `.whl` wheel and extracted `.dll` files.
+          fail_on_unmatched_files: true
+          generate_release_notes: false

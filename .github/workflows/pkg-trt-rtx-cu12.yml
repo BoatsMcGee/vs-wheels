@@ -1,0 +1,194 @@
+name: MLRT-TRT-RTX-CU12
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish built distributions
+        type: boolean
+        required: false
+        default: false
+      repository:
+        description: Package index to publish to
+        type: choice
+        required: true
+        default: testpypi
+        options:
+          - testpypi
+          - pypi
+      version:
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX)
+        type: string
+        required: false
+      cuda-windows:
+        description: CUDA version for Windows
+        type: string
+        required: false
+        default: "12.9.2"
+      tensorrt-rtx-windows:
+        description: TensorRT-RTX version for Windows (https://developer.nvidia.com/tensorrt-rtx)
+        type: string
+        required: false
+        default: "1.5.0.114"
+      windows-runner:
+        description: Windows runner to use
+        type: choice
+        required: true
+        default: windows-2025
+        options:
+          - windows-2025
+          - windows-2022
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: false
+      cuda-windows:
+        type: string
+        required: false
+        default: "12.9.2"
+      tensorrt-rtx-windows:
+        type: string
+        required: false
+        default: "1.5.0.114"
+      windows-runner:
+        type: string
+        required: false
+        default: "windows-2025"
+
+env:
+  CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '12.9.2' }}
+  TENSORRT_RTX_WINDOWS_VERSION: ${{ inputs.tensorrt-rtx-windows || '1.5.0.114' }}
+  PACKAGE_NAME: trt_rtx
+
+jobs:
+  build-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: ${{ inputs.windows-runner || 'windows-2025' }}
+
+    name: Build wheels on ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Initialize submodules
+        run: |
+          git config --global --add safe.directory "$env:GITHUB_WORKSPACE"
+          git submodule update --init --recursive vsmlrt/${{ env.PACKAGE_NAME }}/vs-mlrt vsmlrt/${{ env.PACKAGE_NAME }}/vapoursynth
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: false
+
+      - name: Setup MSVC
+        uses: ./.github/actions/setup-msvc
+
+      - name: Install build tools
+        run: |
+          uv tool install cmake
+          uv tool install ninja
+
+      - name: Setup CUDA (Windows)
+        uses: ./.github/actions/setup-cuda-windows
+        with:
+          cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
+          cuda-components: >-
+            nvcc,
+            cudart,
+            cuda_profiler_api,
+            crt,
+            nvptxcompiler
+          cache-key: ${{ matrix.os }}
+
+      - name: Setup TensorRT RTX (Windows)
+        uses: ./.github/actions/setup-tensorrt-rtx-windows
+        with:
+          tensorrt-rtx-version: ${{ env.TENSORRT_RTX_WINDOWS_VERSION }}
+          cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
+
+      - name: Build wheel
+        run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX: ${{ inputs.version }}
+
+      - name: Copy TensorRT RTX DLLs (Windows)
+        shell: pwsh
+        run: |
+          $trtRtxLib = "$env:TENSORRT_RTX_HOME\lib"
+          if (Test-Path $trtRtxLib) {
+            Copy-Item "$trtRtxLib\*.dll" -Destination dist/ -Force
+            Write-Host "Copied TensorRT-RTX DLLs from $trtRtxLib"
+          } else {
+            Write-Warning "TENSORRT_RTX_HOME\lib not found at $trtRtxLib"
+          }
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.name }}-cu12
+          path: ./dist/*
+
+  build-sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Initialize submodules
+        run: >-
+          git submodule update --init --recursive
+          vsmlrt/${{ env.PACKAGE_NAME }}/vs-mlrt
+          vsmlrt/${{ env.PACKAGE_NAME }}/vapoursynth
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: false
+
+      - name: Build sdist
+        run: uv build --sdist --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX: ${{ inputs.version }}
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-sdist-cu12
+          path: dist/*.tar.gz
+
+  trigger-publish:
+    name: Trigger publish
+    if: github.event_name == 'workflow_dispatch' && inputs.publish == true
+    needs: [build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+
+    steps:
+      - name: Trigger publish workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REPOSITORY_URL: ${{ inputs.repository == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
+        run: >-
+          gh workflow run cd-publish.yml
+          -f artifact-pattern=${{ env.PACKAGE_NAME }}-cu12-*
+          -f package=vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
+          -f packages-dir=dist
+          -f repository=${{ inputs.repository }}
+          -f repository-url="$REPOSITORY_URL"
+          -f run-id=${{ github.run_id }}
+          --ref ${{ github.ref_name }}

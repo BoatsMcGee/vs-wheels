@@ -101,12 +101,6 @@ jobs:
         uses: ./.github/actions/setup-cuda-windows-cu12
         with:
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
-          cuda-components: >-
-            nvcc,
-            cudart,
-            cuda_profiler_api,
-            crt,
-            nvptxcompiler
           cache-key: ${{ matrix.os }}
 
       - name: Setup TensorRT RTX (Windows)

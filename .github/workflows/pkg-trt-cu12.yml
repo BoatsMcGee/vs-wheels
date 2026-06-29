@@ -29,7 +29,7 @@ on:
         description: TensorRT version for Windows (https://developer.nvidia.com/tensorrt/download/)
         type: string
         required: false
-        default: "10.13.2.6"
+        default: "11.1.0.106"
       windows-runner:
         description: Windows runner to use
         type: choice
@@ -50,7 +50,7 @@ on:
       tensorrt-windows:
         type: string
         required: false
-        default: "10.13.2.6"
+        default: "11.1.0.106"
       windows-runner:
         type: string
         required: false
@@ -58,7 +58,7 @@ on:
 
 env:
   CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '12.9.2' }}
-  TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '10.13.2.6' }}
+  TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '11.1.0.106' }}
   PACKAGE_NAME: trt
 
 jobs:
@@ -101,16 +101,10 @@ jobs:
         uses: ./.github/actions/setup-cuda-windows-cu12
         with:
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
-          cuda-components: >-
-            nvcc,
-            cudart,
-            cuda_profiler_api,
-            crt,
-            nvptxcompiler
           cache-key: ${{ matrix.os }}
 
       - name: Setup TensorRT (Windows)
-        uses: ./.github/actions/setup-tensorrt-windows
+        uses: ./.github/actions/setup-tensorrt-windows-pypi
         with:
           tensorrt-version: ${{ env.TENSORRT_WINDOWS_VERSION }}
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}

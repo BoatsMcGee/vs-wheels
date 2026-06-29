@@ -85,7 +85,6 @@ jobs:
         uses: ./.github/actions/setup-cuda-windows-cu12
         with:
           cuda-version: ${{ env.CUDA_WINDOWS }}
-          cuda-components: "nvcc, cudart, nvrtc_dev, nvjitlink, cufft, cufft_dev, crt, nvptxcompiler"
           cache-key: ${{ matrix.os }}
 
       - name: Build wheels

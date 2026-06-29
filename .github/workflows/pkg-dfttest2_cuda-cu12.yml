@@ -98,24 +98,20 @@ jobs:
           $whl = Get-ChildItem -Path dist/*.whl | Select-Object -First 1
           $extractDir = "wheel_extracted"
           Expand-Archive -LiteralPath $whl.FullName -DestinationPath $extractDir -Force
-          $cudaBin = "$env:CUDA_PATH\bin"
-          $dllCopied = $false
+          $cudaPath = "$env:CUDA_PATH"
+          Write-Host "CUDA_PATH = $cudaPath"
+          $cudaBin = Join-Path $cudaPath "bin"
           if (Test-Path $cudaBin) {
-            foreach ($dll in @("cufft64_12.dll", "nvrtc64_12.dll", "nvJitLink64_12.dll", "nvptxcompiler64_12.dll", "cuinins64_12.dll")) {
-              $src = Join-Path $cudaBin $dll
-              if (Test-Path $src) {
-                $destDir = "$extractDir\platlib\vapoursynth\plugins\dfttest2_cuda"
-                Copy-Item $src -Destination $destDir -Force
-                Write-Host "Copied $dll to $destDir"
-                $dllCopied = $true
-              } else {
-                Write-Host "NOT FOUND: $src"
-              }
-            }
+            Write-Host "CUDA bin contents (first 30):"
+            Get-ChildItem $cudaBin -Filter "*.dll" | Select-Object -First 30 | ForEach-Object { Write-Host "  $($_.Name)" }
           } else {
             Write-Host "CUDA bin not found: $cudaBin"
+            $cudaParent = Split-Path $cudaPath -Parent
+            if (Test-Path $cudaParent) {
+              Write-Host "Contents of $cudaParent :"
+              Get-ChildItem $cudaParent | ForEach-Object { Write-Host "  $($_.Name)" }
+            }
           }
-          Write-Host "DLL copied: $dllCopied"
           Remove-Item $whl.FullName -Force
           uv tool run wheel pack $extractDir -d dist/
           Remove-Item -Recurse -Force $extractDir

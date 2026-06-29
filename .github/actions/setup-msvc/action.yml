@@ -1,5 +1,10 @@
 name: Setup MSVC
 description: Configure MSVC environment variables
+inputs:
+  msvc-version:
+    description: "MSVC toolset version to pin (e.g. 14.39). Empty uses the default (latest)."
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -7,6 +12,10 @@ runs:
     - name: Setup MSVC
       shell: pwsh
       run: |
-        . ./scripts/Enter-DevShell.ps1
+        $params = @()
+        if ("${{ inputs.msvc-version }}") {
+          $params += "-MsvcToolsetVersion", "${{ inputs.msvc-version }}"
+        }
+        . ./scripts/Enter-DevShell.ps1 @params
         $envVars = "INCLUDE", "LIB", "LIBPATH", "UCRTVersion", "VCToolsVersion", "WindowsSdkDir", "WindowsSDKVersion", "PATH"
         $envVars | ForEach-Object { if (Test-Path "Env:$_") { "$_=$((Get-Content Env:\$_))" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8 } }

@@ -34,10 +34,10 @@ on:
         description: Windows runner to use
         type: choice
         required: true
-        default: windows-2025
+        default: windows-2022
         options:
-          - windows-2025
           - windows-2022
+          - windows-2025
   workflow_call:
     inputs:
       version:
@@ -54,7 +54,7 @@ on:
       windows-runner:
         type: string
         required: false
-        default: "windows-2025"
+        default: "windows-2022"
 
 env:
   CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '12.9.2' }}
@@ -68,7 +68,7 @@ jobs:
       matrix:
         include:
           - name: Windows x64
-            os: ${{ inputs.windows-runner || 'windows-2025' }}
+            os: ${{ inputs.windows-runner || 'windows-2022' }}
 
     name: Build wheels on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -168,4 +168,3 @@ jobs:
         with:
           name: ${{ env.PACKAGE_NAME }}-sdist-cu12
           path: dist/*.tar.gz
-

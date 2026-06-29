@@ -52,10 +52,12 @@ target_include_directories(
 
 configure_file(vs-dfttest2/common/config.h.in config.h)
 
+set(CUFFTT_DELAYLOAD_DLL "cufft64_12.dll" CACHE STRING "DLL name for cufft delay-load")
+
 target_link_libraries(dfttest2_cuda PRIVATE CUDA::cuda_driver CUDA::cufft)
 
 if(MSVC)
-  target_link_options(dfttest2_cuda PRIVATE "delayimp.lib" "/DELAYLOAD:cufft64_12.dll")
+  target_link_options(dfttest2_cuda PRIVATE "delayimp.lib" "/DELAYLOAD:${CUFFTT_DELAYLOAD_DLL}")
   target_link_libraries(dfttest2_cuda PRIVATE Ws2_32 ntdll)
 endif()
 

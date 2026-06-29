@@ -2,16 +2,24 @@ cmake_minimum_required(VERSION 3.22)
 project(DFTTEST2_CUDA_Package)
 
 # === Apply patches ===
-include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
+set(APPLY_NVIDIA_WHEEL_PATHS ON CACHE BOOL "Apply nvidia-wheel-paths.patch for CUDA 13 nvidia wheel builds")
+
+if(APPLY_NVIDIA_WHEEL_PATHS)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
+endif()
 
 set(SRC_DFTTEST2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-dfttest2")
 set(BIN_DFTTEST2_DIR "${CMAKE_CURRENT_BINARY_DIR}/vs-dfttest2")
 
-add_patched_source(
-  PATCHED_WIN32
-  "${SRC_DFTTEST2_DIR}/cuda_source/win32.cpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/patches/nvidia-wheel-paths.patch"
-)
+if(APPLY_NVIDIA_WHEEL_PATHS)
+  add_patched_source(
+    PATCHED_WIN32
+    "${SRC_DFTTEST2_DIR}/cuda_source/win32.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/patches/nvidia-wheel-paths.patch"
+  )
+else()
+  set(PATCHED_WIN32 "${SRC_DFTTEST2_DIR}/cuda_source/win32.cpp")
+endif()
 
 # === C++ Standard & Options ===
 set(CMAKE_CXX_STANDARD 20)

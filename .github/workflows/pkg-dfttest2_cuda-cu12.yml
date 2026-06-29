@@ -88,29 +88,27 @@ jobs:
           cache-key: ${{ matrix.os }}
 
       - name: Build wheels
-        run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}
+        run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }} --config-settings cmake.define.APPLY_NVIDIA_WHEEL_PATHS=OFF
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CUDA: ${{ inputs.version }}
 
-      - name: Extract DLL from wheel and copy CUDA dependencies (Windows)
+      - name: Extract DLL from wheel, copy CUDA dependencies, and repack (Windows)
         shell: pwsh
         run: |
           $whl = Get-ChildItem -Path dist/*.whl | Select-Object -First 1
           $extractDir = "wheel_extracted"
           Expand-Archive -LiteralPath $whl.FullName -DestinationPath $extractDir -Force
-          Get-ChildItem -Path $extractDir -Recurse -Filter "*.dll" | ForEach-Object {
-            Copy-Item $_.FullName -Destination dist/ -Force
-            Write-Host "Extracted DLL: $($_.Name)"
-          }
           $cudaBin = "$env:CUDA_PATH\bin"
           if (Test-Path $cudaBin) {
             foreach ($dll in @("cufft64_12.dll", "nvrtc64_12.dll", "nvJitLink64_12.dll", "nvptxcompiler64_12.dll", "cuinins64_12.dll")) {
               if (Test-Path "$cudaBin\$dll") {
-                Copy-Item "$cudaBin\$dll" -Destination dist/ -Force
-                Write-Host "Copied $dll"
+                Copy-Item "$cudaBin\$dll" -Destination $extractDir/ -Force
+                Write-Host "Copied $dll into wheel directory"
               }
             }
           }
+          Remove-Item $whl.FullName -Force
+          uv tool run wheel pack $extractDir -d dist/
           Remove-Item -Recurse -Force $extractDir
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

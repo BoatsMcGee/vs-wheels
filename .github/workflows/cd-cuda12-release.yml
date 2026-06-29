@@ -83,7 +83,7 @@ jobs:
       - name: Download all cu12 artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: "*-cu12-*"
+          pattern: "*-cu12*"
           path: dist
           merge-multiple: true
 

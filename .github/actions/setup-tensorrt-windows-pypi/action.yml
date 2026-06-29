@@ -85,43 +85,6 @@ runs:
 
         foreach ($dll in $dlls) {
           Copy-Item $dll.FullName "tensorrt_home\lib\" -Force
-          $base = $dll.BaseName
-          $libFile = "tensorrt_home\lib\$base.lib"
-
-          if (-not (Test-Path $libFile)) {
-            Write-Host "Generating $libFile from $($dll.Name)..."
-
-            # Get exports from DLL using dumpbin
-            $dumpOutput = & dumpbin /exports $dll.FullName 2>$null
-            $exports = @()
-            $inTable = $false
-            foreach ($line in $dumpOutput) {
-              if ($line -match "ordinal\s+hint\s+RVA\s+name") {
-                $inTable = $true
-                continue
-              }
-              if ($inTable -and $line -match "^\s*\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]\s+(\S+)") {
-                $exports += $Matches[1]
-              }
-            }
-
-            if ($exports.Count -gt 0) {
-              $defFile = "tensorrt_home\lib\$base.def"
-              $defContent = "LIBRARY $($base.ToUpper())`r`nEXPORTS`r`n"
-              foreach ($exp in $exports) {
-                $defContent += "  $exp`r`n"
-              }
-              Set-Content -Path $defFile -Value $defContent -Encoding ASCII
-
-              & lib /def:"$defFile" /out:"$libFile" /machine:x64 2>$null
-              if (Test-Path $libFile) {
-                Write-Host "  Generated $libFile"
-              } else {
-                Write-Warning "  FAILED to generate $libFile"
-              }
-              Remove-Item $defFile -Force -ErrorAction SilentlyContinue
-            }
-          }
         }
 
         Write-Host "TENSORRT_HOME structure:"

@@ -29,7 +29,7 @@ on:
         description: TensorRT version for Windows (https://developer.nvidia.com/tensorrt/download/)
         type: string
         required: false
-        default: "11.0.0.114"
+        default: "11.1.0.106"
       windows-runner:
         description: Windows runner to use
         type: choice
@@ -50,7 +50,7 @@ on:
       tensorrt-windows:
         type: string
         required: false
-        default: "11.0.0.114"
+        default: "11.1.0.106"
       windows-runner:
         type: string
         required: false
@@ -58,7 +58,7 @@ on:
 
 env:
   CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '12.9.2' }}
-  TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '11.0.0.114' }}
+  TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '11.1.0.106' }}
   PACKAGE_NAME: trt
 
 jobs:
@@ -107,7 +107,7 @@ jobs:
         uses: ./.github/actions/setup-tensorrt-windows
         with:
           tensorrt-version: ${{ env.TENSORRT_WINDOWS_VERSION }}
-          cuda-version: "13.2.1"
+          cuda-version: "12.9"
           cache-key: ${{ matrix.os }}
 
       - name: Build wheel
@@ -115,16 +115,32 @@ jobs:
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT: ${{ inputs.version }}
 
-      - name: Copy TensorRT DLLs (Windows)
+      - name: Extract wheel, copy DLLs, and repack (Windows)
         shell: pwsh
         run: |
+          $whl = Get-ChildItem -Path dist/*.whl | Select-Object -First 1
+          $extractDir = "wheel_extracted"
+          Expand-Archive -LiteralPath $whl.FullName -DestinationPath $extractDir -Force
+          $pluginDir = Get-ChildItem -Path $extractDir -Recurse -Filter "vstrt*" -Directory | Select-Object -First 1
+          if (-not $pluginDir) { throw "Could not find vstrt directory in extracted wheel" }
+          Write-Host "Plugin directory: $($pluginDir.FullName)"
+
+          # Copy only the TensorRT DLLs the plugin actually links against
           $trtLib = "$env:TENSORRT_HOME\lib"
-          if (Test-Path $trtLib) {
-            Copy-Item "$trtLib\*.dll" -Destination dist/ -Force
-            Write-Host "Copied TensorRT DLLs from $trtLib"
-          } else {
-            Write-Warning "TENSORRT_HOME\lib not found at $trtLib"
+          $trtDlls = @("nvinfer_11.dll", "nvinfer_plugin_11.dll")
+          foreach ($dll in $trtDlls) {
+            $src = Join-Path $trtLib $dll
+            if (Test-Path $src) {
+              Copy-Item $src -Destination $pluginDir.FullName -Force
+              Write-Host "Copied $dll to plugin directory"
+            } else {
+              Write-Warning "NOT FOUND: $src"
+            }
           }
+
+          Remove-Item $whl.FullName -Force
+          uv tool run wheel pack $extractDir -d dist/
+          Remove-Item -Recurse -Force $extractDir
 
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

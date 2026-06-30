@@ -110,21 +110,49 @@ jobs:
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
 
       - name: Build wheel
-        run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
+        run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }} --config-settings cmake.define.APPLY_NVIDIA_WHEEL_PATHS=OFF
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX: ${{ inputs.version }}
           CMAKE_CUDA_FLAGS: "-allow-unsupported-compiler"
 
-      - name: Copy TensorRT RTX DLLs (Windows)
+      - name: Extract wheel, copy DLLs, and repack (Windows)
         shell: pwsh
         run: |
+          $whl = Get-ChildItem -Path dist/*.whl | Select-Object -First 1
+          $extractDir = "wheel_extracted"
+          Expand-Archive -LiteralPath $whl.FullName -DestinationPath $extractDir -Force
+          $pluginDir = Get-ChildItem -Path $extractDir -Recurse -Filter "vstrt*" -Directory | Select-Object -First 1
+          if (-not $pluginDir) { throw "Could not find vstrt directory in extracted wheel" }
+          Write-Host "Plugin directory: $($pluginDir.FullName)"
           $trtRtxLib = "$env:TENSORRT_RTX_HOME\lib"
           if (Test-Path $trtRtxLib) {
-            Copy-Item "$trtRtxLib\*.dll" -Destination dist/ -Force
+            Copy-Item "$trtRtxLib\*.dll" -Destination $pluginDir.FullName -Force
             Write-Host "Copied TensorRT-RTX DLLs from $trtRtxLib"
           } else {
             Write-Warning "TENSORRT_RTX_HOME\lib not found at $trtRtxLib"
           }
+          $cudaBin = "$env:CUDA_PATH\bin"
+          $cudaDlls = @(
+            "cufft64_11.dll",
+            "cufftw64_11.dll",
+            "nvrtc64_120_0.dll",
+            "nvJitLink_120_0.dll",
+            "cudart64_12.dll"
+          )
+          $vsmlrtCudaDir = Join-Path $pluginDir.FullName "vsmlrt-cuda"
+          New-Item -ItemType Directory -Path $vsmlrtCudaDir -Force | Out-Null
+          foreach ($dll in $cudaDlls) {
+            $src = Join-Path $cudaBin $dll
+            if (Test-Path $src) {
+              Copy-Item $src -Destination $vsmlrtCudaDir -Force
+              Write-Host "Copied $dll to vsmlrt-cuda/"
+            } else {
+              Write-Host "NOT FOUND: $src"
+            }
+          }
+          Remove-Item $whl.FullName -Force
+          uv tool run wheel pack $extractDir -d dist/
+          Remove-Item -Recurse -Force $extractDir
 
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

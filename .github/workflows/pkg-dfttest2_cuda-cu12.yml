@@ -106,9 +106,7 @@ jobs:
             "cufft64_11.dll",
             "cufftw64_11.dll",
             "nvrtc64_120_0.dll",
-            "nvJitLink_120_0.dll",
-            "nvptxcompiler64_120_0.dll",
-            "cudart64_12.dll"
+            "nvJitLink_120_0.dll"
           )
           foreach ($dll in $cudaDlls) {
             $src = Join-Path $cudaBin $dll

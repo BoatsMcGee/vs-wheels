@@ -7,6 +7,16 @@ on:
         description: Version override for all packages (SETUPTOOLS_SCM_PRETEND_VERSION)
         type: string
         required: true
+      package:
+        description: Package to build
+        type: choice
+        required: true
+        options:
+          - bm3dcuda
+          - dfttest2_cuda
+          - dfttest2_nvrtc
+          - trt
+          - trt-rtx
       cuda-windows:
         description: CUDA version for Windows
         type: string
@@ -16,7 +26,7 @@ on:
         description: TensorRT version for Windows
         type: string
         required: false
-        default: "11.0.0.114"
+        default: "11.1.0.106"
       tensorrt-rtx-windows:
         description: TensorRT-RTX version for Windows
         type: string
@@ -33,6 +43,7 @@ on:
 
 jobs:
   build-bm3dcuda:
+    if: inputs.package == 'bm3dcuda'
     uses: ./.github/workflows/pkg-bm3dcuda-cu12.yml
     with:
       version: ${{ inputs.version }}
@@ -40,6 +51,7 @@ jobs:
       windows-runner: ${{ inputs.windows-runner }}
 
   build-dfttest2-cuda:
+    if: inputs.package == 'dfttest2_cuda'
     uses: ./.github/workflows/pkg-dfttest2_cuda-cu12.yml
     with:
       version: ${{ inputs.version }}
@@ -47,6 +59,7 @@ jobs:
       windows-runner: ${{ inputs.windows-runner }}
 
   build-dfttest2-nvrtc:
+    if: inputs.package == 'dfttest2_nvrtc'
     uses: ./.github/workflows/pkg-dfttest2_nvrtc-cu12.yml
     with:
       version: ${{ inputs.version }}
@@ -54,6 +67,7 @@ jobs:
       windows-runner: ${{ inputs.windows-runner }}
 
   build-trt:
+    if: inputs.package == 'trt'
     uses: ./.github/workflows/pkg-trt-cu12.yml
     with:
       version: ${{ inputs.version }}
@@ -62,6 +76,7 @@ jobs:
       windows-runner: ${{ inputs.windows-runner }}
 
   build-trt-rtx:
+    if: inputs.package == 'trt-rtx'
     uses: ./.github/workflows/pkg-trt-rtx-cu12.yml
     with:
       version: ${{ inputs.version }}
@@ -72,6 +87,7 @@ jobs:
   create-release:
     name: Create CUDA12 Release
     needs: [build-bm3dcuda, build-dfttest2-cuda, build-dfttest2-nvrtc, build-trt, build-trt-rtx]
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -108,27 +124,48 @@ jobs:
             echo "Using input version: ${{ inputs.version }}"
           fi
 
+      - name: Determine package name
+        id: package
+        run: |
+          case "${{ inputs.package }}" in
+            bm3dcuda)
+              echo "package_name=bm3dcuda" >> "$GITHUB_OUTPUT"
+              echo "display_name=BM3DCUDA" >> "$GITHUB_OUTPUT"
+              ;;
+            dfttest2_cuda)
+              echo "package_name=dfttest2_cuda" >> "$GITHUB_OUTPUT"
+              echo "display_name=DFTTest2 CUDA" >> "$GITHUB_OUTPUT"
+              ;;
+            dfttest2_nvrtc)
+              echo "package_name=dfttest2_nvrtc" >> "$GITHUB_OUTPUT"
+              echo "display_name=DFTTest2 NVRTC" >> "$GITHUB_OUTPUT"
+              ;;
+            trt)
+              echo "package_name=mlrt-trt" >> "$GITHUB_OUTPUT"
+              echo "display_name=MLRT TensorRT" >> "$GITHUB_OUTPUT"
+              ;;
+            trt-rtx)
+              echo "package_name=mlrt-trt-rtx" >> "$GITHUB_OUTPUT"
+              echo "display_name=MLRT TensorRT-RTX" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
       - name: Create release and upload assets
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3
         with:
-          tag_name: "cuda12-${{ steps.version.outputs.version }}"
-          name: "CUDA 12 Builds ${{ steps.version.outputs.version }}"
+          tag_name: "vapoursynth-${{ steps.package.outputs.package_name }}-cuda12-${{ steps.version.outputs.version }}"
+          name: "VapourSynth ${{ steps.package.outputs.display_name }} CUDA 12 ${{ steps.version.outputs.version }}"
           files: dist/*
-          body: |-
-            CUDA 12.9.2 alternative builds for Windows.
+          body: |
+            CUDA 12 alternative build for Windows.
 
+            **Package:** ${{ steps.package.outputs.display_name }}
+            **Version:** ${{ steps.version.outputs.version }}
             **CUDA version:** ${{ inputs.cuda-windows }}
             **TensorRT version:** ${{ inputs.tensorrt-windows }}
             **TensorRT-RTX version:** ${{ inputs.tensorrt-rtx-windows }}
 
-            ## Packages
-            - bm3dcuda
-            - dfttest2_cuda
-            - dfttest2_nvrtc
-            - mlrt-trt
-            - mlrt-trt-rtx
-
             ## Contents
-            Each package includes the `.whl` wheel and extracted `.dll` files.
+            The `.whl` wheel with bundled CUDA and TensorRT runtime DLLs.
           fail_on_unmatched_files: true
           generate_release_notes: false

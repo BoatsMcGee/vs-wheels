@@ -151,7 +151,7 @@ jobs:
           cache-key: ${{ matrix.os }}
 
       - name: Build wheels
-        run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}
+        run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}${{ startsWith(env.CUDA_WINDOWS, '12') && ' --config-settings cmake.define.CUFFTT_DELAYLOAD_DLL=cufft64_12.dll' || '' }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CUDA: ${{ inputs.version }}
 

@@ -7,6 +7,7 @@ index 921556e..049e603 100644
  
  #define DLL_DIR L"vsmlrt-cuda"
 +#define NVIDIA_CUDA_DIR L"../../../nvidia/cu13/bin/x86_64"
++#define NVIDIA_CUDA12_DIR L"../../nvidia/cu12/bin/x86_64"
  
  #include <iostream>
  
@@ -19,6 +20,7 @@ index 921556e..049e603 100644
 +    std::wstring wdll(dll.begin(), dll.end());
 +    std::vector<fs::path> dirs = {
 +        dllDir() / DLL_DIR,
++        dllDir() / NVIDIA_CUDA12_DIR
 +        dllDir() / NVIDIA_CUDA_DIR
 +    };
      HMODULE h = nullptr;

@@ -121,8 +121,8 @@ jobs:
           $whl = Get-ChildItem -Path dist/*.whl | Select-Object -First 1
           $extractDir = "wheel_extracted"
           Expand-Archive -LiteralPath $whl.FullName -DestinationPath $extractDir -Force
-          $pluginDir = Get-ChildItem -Path $extractDir -Recurse -Filter "vstrt*" -Directory | Select-Object -First 1
-          if (-not $pluginDir) { throw "Could not find vstrt directory in extracted wheel" }
+          $pluginDir = Get-ChildItem -Path $extractDir -Recurse -Filter "vstrt.dll" | Select-Object -First 1 | ForEach-Object { $_.Directory }
+          if (-not $pluginDir) { throw "Could not find vstrt.dll in extracted wheel" }
           Write-Host "Plugin directory: $($pluginDir.FullName)"
 
           # Copy only the TensorRT DLLs the plugin actually links against

@@ -69,10 +69,6 @@ jobs:
             arch: x86_64
             container: quay.io/pypa/manylinux_2_28_x86_64
             cuda_repo: rhel8/x86_64
-          - os: ubuntu-24.04-arm
-            arch: sbsa
-            container: quay.io/pypa/manylinux_2_28_aarch64
-            cuda_repo: rhel8/sbsa
           - os: ${{ inputs.windows-runner || 'windows-2025-vs2026' }}
             arch: amd64
 
@@ -135,10 +131,6 @@ jobs:
             libcufft-devel,
             cuda-driver-devel
 
-      - name: Setup LLVM Toolset (aarch64)
-        if: matrix.arch == 'sbsa'
-        run: dnf module install -y llvm-toolset
-
       - name: Setup MSVC
         if: runner.os == 'Windows'
         uses: ./.github/actions/setup-msvc
@@ -191,6 +183,92 @@ jobs:
           name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/*.whl
 
+  # No CUDA 12 support on ARM64
+  build-wheels-arm64:
+    if: ${{ !startsWith(inputs.cuda-linux, '12') }}
+    name: Build wheels on ubuntu-24.04-arm
+    runs-on: ubuntu-24.04-arm
+    container: quay.io/pypa/manylinux_2_28_aarch64
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Initialize submodules
+        run: |
+          # Workaround for Linux containers
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init --recursive dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2 dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
+
+      - name: Adjust nvidia-cufft dependency for CUDA version (Linux)
+        shell: bash
+        run: |
+          CUDA_MAJOR=$(echo "${{ env.CUDA_LINUX }}" | cut -d. -f1)
+          CUDA_MAJOR_NEXT=$((CUDA_MAJOR + 1))
+          pyproject="dfttest2/dfttest2_cuda/pyproject.toml"
+          sed -i "s/nvidia-cufft>=12\.0\.0,<13\.0\.0/nvidia-cufft>=${CUDA_MAJOR}.0.0,<${CUDA_MAJOR_NEXT}.0.0/" "$pyproject"
+          echo "Changed nvidia-cufft dependency to CUDA ${CUDA_MAJOR}"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: false
+
+      - name: Setup CUDA (Linux)
+        uses: ./.github/actions/setup-cuda-linux
+        with:
+          cuda-version: ${{ env.CUDA_LINUX }}
+          cuda-repo: rhel8/sbsa
+          cuda-components: >-
+            cuda-nvcc,
+            cuda-cudart-devel,
+            cuda-nvrtc-devel,
+            libnvjitlink-devel,
+            libcufft-devel,
+            cuda-driver-devel
+
+      - name: Setup LLVM Toolset (aarch64)
+        run: dnf module install -y llvm-toolset
+
+      - name: Install build tools (Linux)
+        run: |
+          uv tool install auditwheel
+          uv tool install patchelf
+          uv tool install wheel
+
+      - name: Build wheels
+        run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CUDA: ${{ inputs.version }}
+
+      - name: Repair wheel (Linux)
+        run: |
+          auditwheel show dist/*.whl
+          auditwheel repair --strip --exclude libcuda.so.* --exclude libcufft.so* dist/*.whl -w repaired_wheels
+          rm dist/*.whl
+          mv repaired_wheels/*.whl dist/
+
+          # Fix RPATH for all bundled libraries in the repaired wheel to ensure they find each other via $ORIGIN
+          echo "=== Patching RPATHs inside repaired wheel ==="
+          wheel unpack dist/*.whl
+          UNPACKED_DIR=$(ls -d vapoursynth_dfttest2_cuda-*)
+          for f in "$UNPACKED_DIR"/vapoursynth/plugins/dfttest2_cuda/*.so*; do
+            if [ -f "$f" ] && [ ! -L "$f" ]; then
+              echo "Setting RPATH on: $(basename "$f")"
+              patchelf --set-rpath '$ORIGIN:$ORIGIN/../../../nvidia/cu13/lib' "$f"
+            fi
+          done
+          echo "Repacking wheel..."
+          rm dist/*.whl
+          wheel pack "$UNPACKED_DIR" -d dist/
+          rm -rf "$UNPACKED_DIR"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-wheels-ubuntu-24.04-arm-sbsa
+          path: dist/*.whl
+
   build-sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
@@ -240,7 +318,7 @@ jobs:
   trigger-publish:
     name: Trigger ${{ inputs.repository }} publish
     if: github.event_name == 'workflow_dispatch' && inputs.publish
-    needs: [build-wheels, build-sdist]
+    needs: [build-wheels, build-wheels-arm64, build-sdist]
     runs-on: ubuntu-latest
     permissions:
       actions: write

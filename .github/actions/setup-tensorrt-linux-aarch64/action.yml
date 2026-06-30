@@ -28,6 +28,12 @@ runs:
         CUDA_REPO="${{ inputs.cuda-repo }}"
         CUDA_REPO_DIST="${CUDA_REPO%%/*}"
 
+        # CUDA 12 packages use major-only suffix (cuda12), not cuda12.x
+        CUDA_MAJOR=$(echo "$CUDA_VER" | cut -d. -f1)
+        if [ "$CUDA_MAJOR" = "12" ]; then
+          TRT_VER="${TRT_VER//cuda12.*)/cuda12)}"
+        fi
+
         wget https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_REPO}/cuda-keyring_1.1-1_all.deb
         sudo dpkg -i cuda-keyring_1.1-1_all.deb
         sudo apt-get update

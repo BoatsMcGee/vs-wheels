@@ -86,9 +86,6 @@ jobs:
             os: ubuntu-24.04
             cuda_repo: rhel8/x86_64
             container: quay.io/pypa/manylinux_2_28_x86_64
-          - name: Linux ARM64
-            os: ubuntu-24.04-arm
-            cuda_repo: ubuntu2404/sbsa/
           - name: Windows x64
             os: ${{ inputs.cuda-windows && startsWith(inputs.cuda-windows, '12') && 'windows-2022' || 'windows-2025-vs2026' }}
 
@@ -192,31 +189,6 @@ jobs:
             cuda-driver-devel,
             cuda-profiler-api
 
-      - name: Setup TensorRT (Linux ARM64)
-        if: runner.os == 'Linux' && runner.arch == 'ARM64'
-        uses: ./.github/actions/setup-tensorrt-linux-aarch64
-        with:
-          tensorrt-version: ${{ env.TENSORRT_LINUX_AARCH64_VERSION }}
-          tensorrt-components: >-
-            libnvinfer11,
-            libnvinfer-plugin11,
-            libnvinfer-dispatch11,
-            libnvinfer-lean11,
-            libnvinfer-dev,
-            libnvinfer-plugin-dev,
-            libnvinfer-dispatch-dev,
-            libnvinfer-lean-dev,
-            libnvinfer-headers-dev,
-            libnvinfer-safe-headers-dev,
-            libnvinfer-headers-plugin-dev
-          cuda-repo: ${{ matrix.cuda_repo }}
-          cuda-version: ${{ env.CUDA_LINUX_x86_64_VERSION }}
-          cuda-components: >-
-            cuda-nvcc,
-            cuda-cudart-dev,
-            cuda-driver-dev,
-            cuda-profiler-api
-
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
         env:
@@ -239,6 +211,92 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.name }}
+          path: ./dist/*.whl
+
+  # No CUDA 12 support on ARM64
+  build-wheels-arm64:
+    if: ${{ !startsWith(inputs.cuda-linux-aarch64, '12') }}
+    name: Build wheels on Linux ARM64
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Initialize submodules
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init --recursive vsmlrt/${{ env.PACKAGE_NAME }}/vs-mlrt vsmlrt/${{ env.PACKAGE_NAME }}/vapoursynth
+
+      - name: Adjust TensorRT dependency for CUDA version (Linux)
+        shell: bash
+        run: |
+          CUDA_MAJOR=$(echo "${{ env.CUDA_LINUX_x86_64_VERSION }}" | cut -d. -f1)
+          pyproject="vsmlrt/trt/pyproject.toml"
+          if grep -q "tensorrt-cu[0-9]*-libs" "$pyproject"; then
+            sed -i "s/tensorrt-cu[0-9]*-libs/tensorrt-cu${CUDA_MAJOR}-libs/g" "$pyproject"
+            echo "Changed TensorRT dependency to tensorrt-cu${CUDA_MAJOR}-libs"
+          else
+            echo "No change needed (already tensorrt-cu${CUDA_MAJOR}-libs or pattern not found)"
+          fi
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: false
+
+      - name: Install build tools (Linux)
+        run: |
+          uv tool install cmake
+          uv tool install ninja
+
+      - name: Setup TensorRT (Linux ARM64)
+        uses: ./.github/actions/setup-tensorrt-linux-aarch64
+        with:
+          tensorrt-version: ${{ env.TENSORRT_LINUX_AARCH64_VERSION }}
+          tensorrt-components: >-
+            libnvinfer11,
+            libnvinfer-plugin11,
+            libnvinfer-dispatch11,
+            libnvinfer-lean11,
+            libnvinfer-dev,
+            libnvinfer-plugin-dev,
+            libnvinfer-dispatch-dev,
+            libnvinfer-lean-dev,
+            libnvinfer-headers-dev,
+            libnvinfer-safe-headers-dev,
+            libnvinfer-headers-plugin-dev
+          cuda-repo: ubuntu2404/sbsa/
+          cuda-version: ${{ env.CUDA_LINUX_x86_64_VERSION }}
+          cuda-components: >-
+            cuda-nvcc,
+            cuda-cudart-dev,
+            cuda-driver-dev,
+            cuda-profiler-api
+
+      - name: Build wheel
+        run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT: ${{ inputs.version }}
+
+      - name: Repair wheel (Linux)
+        run: |
+          uvx --with patchelf auditwheel repair \
+            --exclude libnvinfer.so.* \
+            --exclude libnvinfer_plugin.so.* \
+            --exclude libnvinfer_dispatch.so.* \
+            --exclude libnvinfer_lean.so.* \
+            --strip dist/*.whl \
+            -w repaired_wheels
+          rm dist/*.whl
+          mv repaired_wheels/*.whl dist/
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.PACKAGE_NAME }}-wheels-Linux ARM64
           path: ./dist/*.whl
 
   build-sdist:
@@ -297,7 +355,7 @@ jobs:
   trigger-publish:
     name: Trigger ${{ inputs.repository }} publish
     if: github.event_name == 'workflow_dispatch' && inputs.publish
-    needs: [build-wheels, build-sdist]
+    needs: [build-wheels, build-wheels-arm64, build-sdist]
     runs-on: ubuntu-latest
     permissions:
       actions: write

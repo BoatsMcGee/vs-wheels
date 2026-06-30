@@ -7,20 +7,20 @@ on:
     paths:
       - vsmlrt/ort/**
       - .github/workflows/pkg-ort-cuda.yml
-      - .github/actions/setup-cuda-*/**
-      - .github/actions/setup-cudnn-*/**
-      - .github/actions/setup-onnx-*/**
-      - .github/actions/setup-onnxruntime-*/**
-      - .github/cmake-cache/onnxruntime-*/**
+      - .github/actions/setup-cuda-*/
+      - .github/actions/setup-cudnn-*/
+      - .github/actions/setup-onnx-*/
+      - .github/actions/setup-onnxruntime-*/
+      - .github/cmake-cache/onnxruntime-*/
   pull_request:
     paths:
       - vsmlrt/ort/**
       - .github/workflows/pkg-ort-cuda.yml
-      - .github/actions/setup-cuda-*/**
-      - .github/actions/setup-cudnn-*/**
-      - .github/actions/setup-onnx-*/**
-      - .github/actions/setup-onnxruntime-*/**
-      - .github/cmake-cache/onnxruntime-*/**
+      - .github/actions/setup-cuda-*/
+      - .github/actions/setup-cudnn-*/
+      - .github/actions/setup-onnx-*/
+      - .github/actions/setup-onnxruntime-*/
+      - .github/cmake-cache/onnxruntime-*/
   schedule:
     - cron: 55 3 3-30/4 * *
   workflow_dispatch:

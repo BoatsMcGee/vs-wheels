@@ -2,7 +2,13 @@ cmake_minimum_required(VERSION 3.22)
 project(VSTRT_RTX_Package)
 
 # === Apply patches ===
-include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
+# The nvidia-wheel-paths.patch modifies win32.cpp to load DLLs from a bundled directory.
+# For native PyPI tensorrt-rtx-cu{major}-libs installs, DLLs are in site-packages which is
+# already on the default search path, so the patch is not needed.
+option(TRT_RTX_APPLY_DLL_PATH_PATCH "Apply nvidia-wheel-paths.patch for bundled DLL loading" ON)
+if(TRT_RTX_APPLY_DLL_PATH_PATCH)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
+endif()
 
 set(SRC_VSTRT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt")
 set(BIN_VSTRT_DIR "${CMAKE_CURRENT_BINARY_DIR}/vs-mlrt")

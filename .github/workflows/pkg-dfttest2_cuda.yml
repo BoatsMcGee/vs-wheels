@@ -90,6 +90,31 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive dfttest2/${{ env.PACKAGE_NAME }}/vs-dfttest2 dfttest2/${{ env.PACKAGE_NAME }}/vapoursynth
 
+      - name: Adjust nvidia-cufft dependency for CUDA version (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $cudaMajor = "${{ env.CUDA_WINDOWS }}".Split(".")[0]
+          $pyproject = "dfttest2/dfttest2_cuda/pyproject.toml"
+          $content = Get-Content $pyproject -Raw
+          $newContent = $content -replace 'nvidia-cufft>=12\.0\.0,<13\.0\.0', "nvidia-cufft>=$cudaMajor.0.0,<$([string]([int]$cudaMajor+1)).0.0"
+          if ($content -ne $newContent) {
+            Set-Content $pyproject $newContent -NoNewline
+            Write-Host "Changed nvidia-cufft dependency to CUDA $cudaMajor"
+          } else {
+            Write-Host "No change needed"
+          }
+
+      - name: Adjust nvidia-cufft dependency for CUDA version (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          CUDA_MAJOR=$(echo "${{ env.CUDA_LINUX }}" | cut -d. -f1)
+          CUDA_MAJOR_NEXT=$((CUDA_MAJOR + 1))
+          pyproject="dfttest2/dfttest2_cuda/pyproject.toml"
+          sed -i "s/nvidia-cufft>=12\.0\.0,<13\.0\.0/nvidia-cufft>=${CUDA_MAJOR}.0.0,<${CUDA_MAJOR_NEXT}.0.0/" "$pyproject"
+          echo "Changed nvidia-cufft dependency to CUDA ${CUDA_MAJOR}"
+
       - name: Set up uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:

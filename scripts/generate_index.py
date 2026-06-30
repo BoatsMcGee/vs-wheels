@@ -8,11 +8,20 @@
 # ///
 """
 Generate a PEP 503 Simple Repository API index from GitHub Releases.
+
+Environment variables:
+    GITHUB_REPOSITORY - Repository to fetch releases from (default: Jaded-Encoding-Thaumaturgy/vs-wheels)
+    GITHUB_TOKEN - GitHub API token
+    INDEX_TITLE - Title for the index pages (default: JET Package Index)
+    HF_BUCKET - HuggingFace bucket ID for asset URLs (default: Ichunjo/wheel-storage)
+    INDEX_FILTER - If set, only include releases whose tag contains this string
+    OUTPUT_DIR - Output directory for the index (default: _site)
 """
 
 import json
 import logging
 import os
+import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -24,7 +33,7 @@ import rich.logging
 from dumb_pypi.main import main as dumb_pypi_main  # type: ignore[import-untyped]
 
 PACKAGES_URL_PLACEHOLDER = "https://__PACKAGES_PLACEHOLDER__"
-OUTPUT_DIR = Path("_site")
+DEFAULT_OUTPUT_DIR = Path("_site")
 LOGO_WIDTH = 100
 
 
@@ -170,7 +179,7 @@ def collect_assets(releases: list[dict[str, Any]], token: str | None = None) -> 
     return assets
 
 
-def run_dumb_pypi(assets: dict[str, AssetInfo], title: str) -> None:
+def run_dumb_pypi(assets: dict[str, AssetInfo], title: str, output_dir: Path) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         package_list = Path(tmpdir) / "packages.json"
 
@@ -199,7 +208,7 @@ def run_dumb_pypi(assets: dict[str, AssetInfo], title: str) -> None:
             "--packages-url",
             PACKAGES_URL_PLACEHOLDER,
             "--output-dir",
-            str(OUTPUT_DIR),
+            str(output_dir),
             "--title",
             title,
             "--logo",
@@ -208,10 +217,10 @@ def run_dumb_pypi(assets: dict[str, AssetInfo], title: str) -> None:
             str(LOGO_WIDTH),
         ]
         dumb_pypi_main(args)
-    _fixup_urls(assets)
+    _fixup_urls(assets, output_dir)
 
 
-def _fixup_urls(assets: dict[str, AssetInfo]) -> None:
+def _fixup_urls(assets: dict[str, AssetInfo], output_dir: Path) -> None:
     extra_style = (
         f"\n<style>.title h1 {{ "
         f"background-size: contain; "
@@ -220,7 +229,7 @@ def _fixup_urls(assets: dict[str, AssetInfo]) -> None:
         f"}}</style>\n"
     )
 
-    for path in OUTPUT_DIR.rglob("*"):
+    for path in output_dir.rglob("*"):
         if path.is_file() and path.suffix in (".html", ".json"):
             content = path.read_text(encoding="utf-8")
             original = content
@@ -241,10 +250,21 @@ def main() -> None:
     token = os.environ.get("GITHUB_TOKEN")
     title = os.environ.get("INDEX_TITLE", "JET Package Index")
     bucket_id = os.environ.get("HF_BUCKET", "Ichunjo/wheel-storage")
+    filter_pattern = os.environ.get("INDEX_FILTER")
 
-    logger.info("Generating index for %s -> %s", repo, OUTPUT_DIR)
+    # Allow overriding the output directory via env var or command-line argument
+    output_dir = Path(os.environ.get("OUTPUT_DIR", DEFAULT_OUTPUT_DIR))
+    if len(sys.argv) > 1:
+        output_dir = Path(sys.argv[1])
+
+    logger.info("Generating index for %s -> %s", repo, output_dir)
 
     releases = fetch_releases(repo, token)
+
+    if filter_pattern:
+        releases = [r for r in releases if filter_pattern in r.get("tag_name", "")]
+        logger.info("Filtered to %d release(s) matching '%s'", len(releases), filter_pattern)
+
     assets = collect_assets(releases, token)
 
     hf_files = fetch_hf_files(bucket_id)
@@ -261,7 +281,7 @@ def main() -> None:
     if not assets:
         logger.warning("No distribution assets found in any release.")
     else:
-        run_dumb_pypi(assets, title)
+        run_dumb_pypi(assets, title, output_dir)
 
     logger.info("Done.")
 

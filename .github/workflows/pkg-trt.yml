@@ -107,6 +107,34 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive vsmlrt/${{ env.PACKAGE_NAME }}/vs-mlrt vsmlrt/${{ env.PACKAGE_NAME }}/vapoursynth
 
+      - name: Adjust TensorRT dependency for CUDA version (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $cudaMajor = "${{ env.CUDA_WINDOWS_VERSION }}".Split(".")[0]
+          $pyproject = "vsmlrt/trt/pyproject.toml"
+          $content = Get-Content $pyproject -Raw
+          $newContent = $content -replace 'tensorrt-cu\d+-libs', "tensorrt-cu$cudaMajor-libs"
+          if ($content -ne $newContent) {
+            Set-Content $pyproject $newContent -NoNewline
+            Write-Host "Changed TensorRT dependency to tensorrt-cu$cudaMajor-libs"
+          } else {
+            Write-Host "No change needed (already tensorrt-cu$cudaMajor-libs or pattern not found)"
+          }
+
+      - name: Adjust TensorRT dependency for CUDA version (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          CUDA_MAJOR=$(echo "${{ env.CUDA_LINUX_x86_64_VERSION }}" | cut -d. -f1)
+          pyproject="vsmlrt/trt/pyproject.toml"
+          if grep -q "tensorrt-cu[0-9]*-libs" "$pyproject"; then
+            sed -i "s/tensorrt-cu[0-9]*-libs/tensorrt-cu${CUDA_MAJOR}-libs/g" "$pyproject"
+            echo "Changed TensorRT dependency to tensorrt-cu${CUDA_MAJOR}-libs"
+          else
+            echo "No change needed (already tensorrt-cu${CUDA_MAJOR}-libs or pattern not found)"
+          fi
+
       - name: Set up uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:

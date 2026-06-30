@@ -20,6 +20,11 @@ on:
         type: boolean
         required: false
         default: false
+      tag-suffix:
+        description: Optional suffix appended to the release tag (e.g., "-cuda12" for CUDA 12 builds)
+        type: string
+        required: false
+        default: ""
 
 jobs:
   upload:
@@ -50,7 +55,7 @@ jobs:
         run: |
           WHEEL=$(ls dist/*.whl | head -1)
           VERSION=$(basename "$WHEEL" | sed 's/^[^-]*-\([^-]*\)-.*/\1/')
-          TAG="${{ inputs.display-name }}-v$VERSION"
+          TAG="${{ inputs.display-name }}-v$VERSION${{ inputs.tag-suffix }}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "Detected version: $VERSION"
@@ -63,9 +68,9 @@ jobs:
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ inputs.display-name }} ${{ steps.version.outputs.version }}
+          name: ${{ inputs.display-name }} ${{ steps.version.outputs.version }}${{ inputs.tag-suffix }}
           files: dist/*
-          body: ${{ inputs.display-name }} ${{ steps.version.outputs.version }}
+          body: ${{ inputs.display-name }} ${{ steps.version.outputs.version }}${{ inputs.tag-suffix }}
           fail_on_unmatched_files: true
           generate_release_notes: false
 

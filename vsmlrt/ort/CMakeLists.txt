@@ -2,7 +2,13 @@ cmake_minimum_required(VERSION 3.22)
 project(VSORT_Package)
 
 # === Apply patches ===
-include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
+# The nvidia-wheel-paths.patch modifies win32.cpp to load DLLs from a bundled directory.
+# For native PyPI nvidia-cu{major} installs, DLLs are in site-packages which is
+# already on the default search path, so the patch is not needed.
+option(ORT_APPLY_DLL_PATH_PATCH "Apply nvidia-wheel-paths.patch for bundled DLL loading" ON)
+if(ORT_APPLY_DLL_PATH_PATCH)
+    include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
+endif()
 
 set(SRC_VSORT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt")
 set(BIN_VSORT_DIR "${CMAKE_CURRENT_BINARY_DIR}/vs-mlrt")

@@ -2,7 +2,7 @@ diff --git a/cuda_source/win32.cpp b/cuda_source/win32.cpp
 index 921556e..049e603 100644
 --- a/cuda_source/win32.cpp
 +++ b/cuda_source/win32.cpp
-@@ -7,6 +7,7 @@
+@@ -7,6 +7,8 @@
  #include <filesystem>
  
  #define DLL_DIR L"vsmlrt-cuda"
@@ -11,7 +11,7 @@ index 921556e..049e603 100644
  
  #include <iostream>
  
-@@ -32,14 +33,21 @@ static fs::path dllDir() {
+@@ -32,14 +34,23 @@ static fs::path dllDir() {
  }
  
  FARPROC loadDLLs(std::string dll) {
@@ -20,7 +20,7 @@ index 921556e..049e603 100644
 +    std::wstring wdll(dll.begin(), dll.end());
 +    std::vector<fs::path> dirs = {
 +        dllDir() / DLL_DIR,
-+        dllDir() / NVIDIA_CUDA12_DIR
++        dllDir() / NVIDIA_CUDA12_DIR,
 +        dllDir() / NVIDIA_CUDA_DIR
 +    };
      HMODULE h = nullptr;

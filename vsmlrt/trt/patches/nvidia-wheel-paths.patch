@@ -1,18 +1,17 @@
 diff --git a/vstrt/win32.cpp b/vstrt/win32.cpp
-index 1686183..0c7ae1a 100644
+index 1686183..51c692d 100644
 --- a/vstrt/win32.cpp
 +++ b/vstrt/win32.cpp
-@@ -6,7 +6,8 @@
+@@ -6,7 +6,7 @@
  #include <stdexcept>
  #include <filesystem>
  
 -#define DLL_DIR L"vsmlrt-cuda"
 +#define DLL_DIR L"../../../tensorrt_libs"
-+#define CUDA12_DLL_DIR L"../../tensorrt_libs"
  
  #include <iostream>
  
-@@ -63,17 +64,31 @@ static fs::path dllDir() {
+@@ -63,10 +63,17 @@ static fs::path dllDir() {
  }
  
  FARPROC loadDLLs() {
@@ -20,37 +19,15 @@ index 1686183..0c7ae1a 100644
 +	// Search order: tensorrt_libs (patched path) → vsmlrt-cuda (original path)
 +	fs::path base = dllDir();
 +	fs::path dirs[] = {
-+		base / CUDA12_DLL_DIR,
-+		base / DLL_DIR
++		base / DLL_DIR,
++		base / L"vsmlrt-cuda"
 +	};
  	HMODULE h = nullptr;
--	for (const auto dll: dlls) {
+ 	for (const auto dll: dlls) {
 -		fs::path p = dir / dll;
--		std::wstring s = p;
--		h = LoadLibraryW(s.c_str());
--		DWORD err = GetLastError();
--		if (getenv("VSTRT_VERBOSE"))
--			std::wcerr << L"vstrt: preloading " << p << L": " << h << std::endl;
--		if (!h)
--			std::wcerr << L"vstrt: failed to preload " << s << L", errno " << err << std::endl;
-+	for (const auto& dir : dirs) {
-+		bool success = true;
-+		for (const auto dll : dlls) {
-+			fs::path p = dir / dll;
-+			std::wstring s = p;
-+			h = LoadLibraryW(s.c_str());
-+			DWORD err = GetLastError();
-+			if (getenv("VSTRT_VERBOSE"))
-+				std::wcerr << L"vstrt: preloading " << p << L": " << h << std::endl;
-+			if (!h) {
-+				std::wcerr << L"vstrt: failed to preload " << s << L", errno " << err << std::endl;
-+				success = false;
-+				break; // Try the next directory if a DLL is missing from this one
-+			}
-+		}
-+		if (success) {
-+			break; // Stop searching once a directory successfully loads all DLLs
-+		}
- 	}
- 	return (FARPROC)h;
- }
++		fs::path p = dirs[0] / dll;
++		for (const auto &dir : dirs)
++			if (fs::exists(dir / dll)) { p = dir / dll; break; }
+ 		std::wstring s = p;
+ 		h = LoadLibraryW(s.c_str());
+ 		DWORD err = GetLastError();

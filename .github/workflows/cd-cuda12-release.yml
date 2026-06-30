@@ -17,6 +17,7 @@ on:
           - dfttest2_nvrtc
           - trt
           - trt-rtx
+          - vsmlrt-cuda
       cuda-windows:
         description: CUDA version for Windows
         type: string
@@ -84,9 +85,18 @@ jobs:
       tensorrt-rtx-windows: ${{ inputs.tensorrt-rtx-windows }}
       windows-runner: ${{ inputs.windows-runner }}
 
+  build-vsmlrt-cuda:
+    if: inputs.package == 'vsmlrt-cuda'
+    uses: ./.github/workflows/pkg-vsmlrt-cuda-cu12.yml
+    with:
+      version: ${{ inputs.version }}
+      cuda-windows: ${{ inputs.cuda-windows }}
+      tensorrt-windows: ${{ inputs.tensorrt-windows }}
+      windows-runner: ${{ inputs.windows-runner }}
+
   create-release:
     name: Create CUDA12 Release
-    needs: [build-bm3dcuda, build-dfttest2-cuda, build-dfttest2-nvrtc, build-trt, build-trt-rtx]
+    needs: [build-bm3dcuda, build-dfttest2-cuda, build-dfttest2-nvrtc, build-trt, build-trt-rtx, build-vsmlrt-cuda]
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     permissions:
@@ -147,6 +157,10 @@ jobs:
             trt-rtx)
               echo "package_name=mlrt-trt-rtx" >> "$GITHUB_OUTPUT"
               echo "display_name=MLRT TensorRT-RTX" >> "$GITHUB_OUTPUT"
+              ;;
+            vsmlrt-cuda)
+              echo "package_name=vsmlrt-cuda" >> "$GITHUB_OUTPUT"
+              echo "display_name=VSMLRT CUDA" >> "$GITHUB_OUTPUT"
               ;;
           esac
 

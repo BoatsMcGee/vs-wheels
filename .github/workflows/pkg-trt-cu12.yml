@@ -110,55 +110,25 @@ jobs:
           cuda-version: "12.9"
           cache-key: ${{ matrix.os }}
 
+      - name: Override dependency for CUDA 12
+        shell: pwsh
+        run: |
+          $pyproject = "vsmlrt/trt/pyproject.toml"
+          $content = Get-Content $pyproject -Raw
+          $content = $content -replace '"tensorrt-cu13-libs==11.1.0.106"', '"vsmlrt-cuda"'
+          Set-Content $pyproject $content -NoNewline
+          Write-Host "Replaced tensorrt-cu13-libs with vsmlrt-cuda in pyproject.toml"
+
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT: ${{ inputs.version }}
 
-      - name: Extract wheel, bundle TensorRT binaries, and repack (Windows)
-        shell: pwsh
-        run: |
-          $whl = Get-ChildItem -Path dist/*.whl | Select-Object -First 1
-          $extractDir = "wheel_extracted"
-          Expand-Archive -LiteralPath $whl.FullName -DestinationPath $extractDir -Force
-          $pluginDir = Get-ChildItem -Path $extractDir -Recurse -Filter "vstrt.dll" | Select-Object -First 1 | ForEach-Object { $_.Directory }
-          if (-not $pluginDir) { throw "Could not find vstrt.dll in extracted wheel" }
-          Write-Host "Plugin directory: $($pluginDir.FullName)"
-
-          # Bundle TensorRT executables and DLLs into vsmlrt-cuda/ for runtime use
-          # (trtexec.exe, nvinfer_11.dll, nvinfer_plugin_11.dll, etc.)
-          # The patch tries tensorrt_libs/ first, then falls back to vsmlrt-cuda/.
-          $vsmlrtCudaDir = Join-Path $pluginDir.FullName "vsmlrt-cuda"
-          New-Item -ItemType Directory -Path $vsmlrtCudaDir -Force | Out-Null
-
-          # Find the TensorRT bin/ folder (contains trtexec.exe and all DLLs)
-          $trtBin = Get-ChildItem -Path $env:TENSORRT_HOME -Recurse -Directory -Filter "bin" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($trtBin) {
-            Copy-Item "$trtBin\*" -Destination $vsmlrtCudaDir -Force
-            Write-Host "Copied all files from $($trtBin.FullName) to vsmlrt-cuda/"
-          } else {
-            Write-Warning "TensorRT bin/ folder not found under $env:TENSORRT_HOME, falling back to nvinfer DLLs only"
-            $trtDlls = @("nvinfer_11.dll", "nvinfer_plugin_11.dll")
-            foreach ($dll in $trtDlls) {
-              $found = Get-ChildItem -Path $env:TENSORRT_HOME -Recurse -Filter $dll -ErrorAction SilentlyContinue | Select-Object -First 1
-              if ($found) {
-                Copy-Item $found.FullName -Destination $vsmlrtCudaDir -Force
-                Write-Host "Copied $dll from $($found.FullName)"
-              } else {
-                Write-Warning "NOT FOUND: $dll under $env:TENSORRT_HOME"
-              }
-            }
-          }
-
-          Remove-Item $whl.FullName -Force
-          uv tool run wheel pack $extractDir -d dist/
-          Remove-Item -Recurse -Force $extractDir
-
       - name: Upload wheel
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ${{ env.PACKAGE_NAME }}-wheels-${{ matrix.name }}-cu12
-          path: ./dist/*
+          path: ./dist/*.whl
 
   build-sdist:
     name: Build source distribution

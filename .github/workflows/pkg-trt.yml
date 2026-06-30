@@ -90,7 +90,7 @@ jobs:
             os: ubuntu-24.04-arm
             cuda_repo: ubuntu2404/sbsa/
           - name: Windows x64
-            os: windows-2025-vs2026
+            os: ${{ inputs.cuda-windows && startsWith(inputs.cuda-windows, '12') && 'windows-2022' || 'windows-2025-vs2026' }}
 
     name: Build wheels on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}

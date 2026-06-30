@@ -52,6 +52,7 @@ on:
         options:
           - windows-2025-vs2026
           - windows-2025
+          - windows-2022
 
 env:
   CUDA_LINUX: ${{ inputs.cuda-linux || '13.3' }}

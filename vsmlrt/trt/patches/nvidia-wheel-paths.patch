@@ -1,5 +1,5 @@
 diff --git a/vstrt/win32.cpp b/vstrt/win32.cpp
-index 1686183..d50ed0d 100644
+index 1686183..51c692d 100644
 --- a/vstrt/win32.cpp
 +++ b/vstrt/win32.cpp
 @@ -6,7 +6,7 @@
@@ -11,3 +11,23 @@ index 1686183..d50ed0d 100644
  
  #include <iostream>
  
+@@ -63,10 +63,17 @@ static fs::path dllDir() {
+ }
+ 
+ FARPROC loadDLLs() {
+-	fs::path dir = dllDir() / DLL_DIR;
++	// Search order: tensorrt_libs (patched path) → vsmlrt-cuda (original path)
++	fs::path base = dllDir();
++	fs::path dirs[] = {
++		base / DLL_DIR,
++		base / L"vsmlrt-cuda"
++	};
+ 	HMODULE h = nullptr;
+ 	for (const auto dll: dlls) {
+-		fs::path p = dir / dll;
++		fs::path p = dirs[0] / dll;
++		for (const auto &dir : dirs)
++			if (fs::exists(dir / dll)) { p = dir / dll; break; }
+ 		std::wstring s = p;
+ 		h = LoadLibraryW(s.c_str());
+ 		DWORD err = GetLastError();

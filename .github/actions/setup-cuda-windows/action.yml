@@ -46,15 +46,66 @@ runs:
         $cudaVersion = $env:CUDA_VERSION_WINDOWS
         $cudaShort = $env:CUDA_VERSION_WINDOWS_SHORT
         $cudaMajor = $cudaVersion.Split(".")[0]
-        $archToken = if ($cudaMajor -eq "12") { "_x86_64" } else { "" }
-        curl.exe -s -o cuda_installer.exe -L `
-          "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/network_installers/cuda_${cudaVersion}_windows${archToken}_network.exe"
-        $components = "${{ inputs.cuda-components }}".Split(',') | ForEach-Object { $_.Trim() }
-        $installArgs = @("-s")
-        foreach ($comp in $components) {
-            $installArgs += "${comp}_$cudaShort"
+
+        if ($cudaMajor -eq "12") {
+          # CUDA 12: use local (offline) installer - network installer is unreliable on GitHub runners
+          $installerUrl = "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/local_installers/cuda_${cudaVersion}_576.57_windows.exe"
+          Write-Host "Downloading CUDA $cudaVersion local installer from: $installerUrl"
+          curl.exe -s -o cuda_installer.exe -L $installerUrl
+
+          if (-not (Test-Path cuda_installer.exe) -or (Get-Item cuda_installer.exe).Length -lt 1MB) {
+            Write-Error "Failed to download CUDA installer. The file is missing or too small."
+            exit 1
+          }
+
+          $fileSizeMB = [math]::Round((Get-Item cuda_installer.exe).Length / 1MB, 1)
+          Write-Host "Downloaded installer size: ${fileSizeMB} MB"
+
+          # Local installer: full install with -s (component-specific install fails)
+          Write-Host "Installing CUDA with args: -s"
+          $proc = Start-Process ./cuda_installer.exe -ArgumentList "-s" -Wait -PassThru
+          Write-Host "Installer exit code: $($proc.ExitCode)"
+        } else {
+          # CUDA 13+: use network installer with component selection
+          $archToken = ""
+          curl.exe -s -o cuda_installer.exe -L `
+            "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/network_installers/cuda_${cudaVersion}_windows${archToken}_network.exe"
+
+          if (-not (Test-Path cuda_installer.exe) -or (Get-Item cuda_installer.exe).Length -lt 1MB) {
+            Write-Error "Failed to download CUDA installer. The file is missing or too small."
+            exit 1
+          }
+
+          $components = "${{ inputs.cuda-components }}".Split(',') | ForEach-Object { $_.Trim() }
+          $installArgs = @("-s")
+          foreach ($comp in $components) {
+              $installArgs += "${comp}_$cudaShort"
+          }
+          Write-Host "Installing CUDA with args: $installArgs"
+          $proc = Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait -PassThru
+          Write-Host "Installer exit code: $($proc.ExitCode)"
         }
-        Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait
+
+        # Verify installation
+        $cudaPath = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v$cudaShort"
+        if (Test-Path $cudaPath) {
+          Write-Host "CUDA installed successfully at: $cudaPath"
+          $nvcc = Get-ChildItem -Path "$cudaPath\bin\nvcc.exe" -ErrorAction SilentlyContinue
+          if ($nvcc) {
+            Write-Host "nvcc found: $($nvcc.FullName)"
+          } else {
+            Write-Warning "nvcc not found in $cudaPath\bin"
+          }
+        } else {
+          Write-Error "CUDA installation directory not found at: $cudaPath"
+          $parentDir = "C:\Program Files\NVIDIA GPU Computing Toolkit"
+          if (Test-Path $parentDir) {
+            Get-ChildItem $parentDir -Recurse -Depth 2 | ForEach-Object { Write-Host "  $($_.FullName)" }
+          } else {
+            Write-Host "Parent directory $parentDir does not exist either."
+          }
+          exit 1
+        }
 
     - name: Cache CUDA (Windows)
       if: steps.cache-cuda.outputs.cache-hit != 'true'

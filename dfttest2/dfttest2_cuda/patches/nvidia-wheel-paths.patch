@@ -1,5 +1,5 @@
 diff --git a/cuda_source/win32.cpp b/cuda_source/win32.cpp
-index 921556e..049e603 100644
+index 921556e..ebc95a5 100644
 --- a/cuda_source/win32.cpp
 +++ b/cuda_source/win32.cpp
 @@ -7,6 +7,8 @@
@@ -11,7 +11,7 @@ index 921556e..049e603 100644
  
  #include <iostream>
  
-@@ -32,14 +34,23 @@ static fs::path dllDir() {
+@@ -32,14 +34,22 @@ static fs::path dllDir() {
  }
  
  FARPROC loadDLLs(std::string dll) {

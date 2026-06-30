@@ -115,7 +115,7 @@ jobs:
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT: ${{ inputs.version }}
 
-      - name: Extract wheel, copy DLLs, and repack (Windows)
+      - name: Extract wheel, bundle TensorRT binaries, and repack (Windows)
         shell: pwsh
         run: |
           $whl = Get-ChildItem -Path dist/*.whl | Select-Object -First 1
@@ -125,19 +125,28 @@ jobs:
           if (-not $pluginDir) { throw "Could not find vstrt.dll in extracted wheel" }
           Write-Host "Plugin directory: $($pluginDir.FullName)"
 
-          # Copy only the TensorRT DLLs the plugin actually links against.
-          # Search recursively since the TensorRT zip may nest lib/ differently.
+          # Bundle TensorRT executables and DLLs into vsmlrt-cuda/ for runtime use
+          # (trtexec.exe, nvinfer_11.dll, nvinfer_plugin_11.dll, etc.)
           # The patch tries tensorrt_libs/ first, then falls back to vsmlrt-cuda/.
-          $trtDlls = @("nvinfer_11.dll", "nvinfer_plugin_11.dll")
           $vsmlrtCudaDir = Join-Path $pluginDir.FullName "vsmlrt-cuda"
           New-Item -ItemType Directory -Path $vsmlrtCudaDir -Force | Out-Null
-          foreach ($dll in $trtDlls) {
-            $found = Get-ChildItem -Path $env:TENSORRT_HOME -Recurse -Filter $dll -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($found) {
-              Copy-Item $found.FullName -Destination $vsmlrtCudaDir -Force
-              Write-Host "Copied $dll from $($found.FullName)"
-            } else {
-              Write-Warning "NOT FOUND: $dll under $env:TENSORRT_HOME"
+
+          # Find the TensorRT bin/ folder (contains trtexec.exe and all DLLs)
+          $trtBin = Get-ChildItem -Path $env:TENSORRT_HOME -Recurse -Directory -Filter "bin" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($trtBin) {
+            Copy-Item "$trtBin\*" -Destination $vsmlrtCudaDir -Force
+            Write-Host "Copied all files from $($trtBin.FullName) to vsmlrt-cuda/"
+          } else {
+            Write-Warning "TensorRT bin/ folder not found under $env:TENSORRT_HOME, falling back to nvinfer DLLs only"
+            $trtDlls = @("nvinfer_11.dll", "nvinfer_plugin_11.dll")
+            foreach ($dll in $trtDlls) {
+              $found = Get-ChildItem -Path $env:TENSORRT_HOME -Recurse -Filter $dll -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($found) {
+                Copy-Item $found.FullName -Destination $vsmlrtCudaDir -Force
+                Write-Host "Copied $dll from $($found.FullName)"
+              } else {
+                Write-Warning "NOT FOUND: $dll under $env:TENSORRT_HOME"
+              }
             }
           }
 

@@ -125,16 +125,16 @@ jobs:
           if (-not $pluginDir) { throw "Could not find vstrt.dll in extracted wheel" }
           Write-Host "Plugin directory: $($pluginDir.FullName)"
 
-          # Copy only the TensorRT DLLs the plugin actually links against
-          $trtLib = "$env:TENSORRT_HOME\lib"
+          # Copy only the TensorRT DLLs the plugin actually links against.
+          # Search recursively since the TensorRT zip may nest lib/ differently.
           $trtDlls = @("nvinfer_11.dll", "nvinfer_plugin_11.dll")
           foreach ($dll in $trtDlls) {
-            $src = Join-Path $trtLib $dll
-            if (Test-Path $src) {
-              Copy-Item $src -Destination $pluginDir.FullName -Force
-              Write-Host "Copied $dll to plugin directory"
+            $found = Get-ChildItem -Path $env:TENSORRT_HOME -Recurse -Filter $dll -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              Copy-Item $found.FullName -Destination $pluginDir.FullName -Force
+              Write-Host "Copied $dll from $($found.FullName)"
             } else {
-              Write-Warning "NOT FOUND: $src"
+              Write-Warning "NOT FOUND: $dll under $env:TENSORRT_HOME"
             }
           }
 

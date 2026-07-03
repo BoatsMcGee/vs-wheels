@@ -1,5 +1,9 @@
 name: CUDA 12 Compatible Release
 
+permissions:
+  actions: write
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:

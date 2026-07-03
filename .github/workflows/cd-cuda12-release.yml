@@ -113,7 +113,6 @@ jobs:
     with:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
-      cuda-linux: ${{ inputs.cuda-linux }}
       windows-runner: ${{ inputs.windows-runner }}
       tensorrt-windows: ${{ inputs.tensorrt-windows }}
 

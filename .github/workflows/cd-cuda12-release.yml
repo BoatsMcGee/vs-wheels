@@ -1,4 +1,4 @@
-name: CUDA12 Combined Release
+name: CUDA 12 Compatible Release
 
 on:
   workflow_dispatch:
@@ -23,13 +23,28 @@ on:
         type: string
         required: false
         default: "12.9.2"
+      cuda-linux:
+        description: CUDA version for Linux builds
+        type: string
+        required: false
+        default: "12.9"
       tensorrt-windows:
         description: TensorRT version for Windows
         type: string
         required: false
         default: "11.1.0.106"
+      tensorrt-linux:
+        description: TensorRT version for Linux builds
+        type: string
+        required: false
+        default: "11.1.0.106"
       tensorrt-rtx-windows:
         description: TensorRT-RTX version for Windows
+        type: string
+        required: false
+        default: "1.5.0.114"
+      tensorrt-rtx-linux:
+        description: TensorRT-RTX version for Linux builds
         type: string
         required: false
         default: "1.5.0.114"
@@ -45,54 +60,60 @@ on:
 jobs:
   build-bm3dcuda:
     if: inputs.package == 'bm3dcuda'
-    uses: ./.github/workflows/pkg-bm3dcuda-cu12.yml
+    uses: ./.github/workflows/pkg-bm3dcuda.yml
     with:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
+      cuda-linux: ${{ inputs.cuda-linux }}
       windows-runner: ${{ inputs.windows-runner }}
 
   build-dfttest2-cuda:
     if: inputs.package == 'dfttest2_cuda'
-    uses: ./.github/workflows/pkg-dfttest2_cuda-cu12.yml
+    uses: ./.github/workflows/pkg-dfttest2_cuda.yml
     with:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
+      cuda-linux: ${{ inputs.cuda-linux }}
       windows-runner: ${{ inputs.windows-runner }}
 
   build-dfttest2-nvrtc:
     if: inputs.package == 'dfttest2_nvrtc'
-    uses: ./.github/workflows/pkg-dfttest2_nvrtc-cu12.yml
+    uses: ./.github/workflows/pkg-dfttest2_nvrtc.yml
     with:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
+      cuda-linux: ${{ inputs.cuda-linux }}
       windows-runner: ${{ inputs.windows-runner }}
 
   build-trt:
     if: inputs.package == 'trt'
-    uses: ./.github/workflows/pkg-trt-cu12.yml
+    uses: ./.github/workflows/pkg-trt.yml
     with:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
-      tensorrt-windows: ${{ inputs.tensorrt-windows }}
+      cuda-linux: ${{ inputs.cuda-linux }}
       windows-runner: ${{ inputs.windows-runner }}
+      tensorrt-windows: ${{ inputs.tensorrt-windows }}
 
   build-trt-rtx:
     if: inputs.package == 'trt-rtx'
-    uses: ./.github/workflows/pkg-trt-rtx-cu12.yml
+    uses: ./.github/workflows/pkg-trt-rtx.yml
     with:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
-      tensorrt-rtx-windows: ${{ inputs.tensorrt-rtx-windows }}
+      cuda-linux: ${{ inputs.cuda-linux }}
       windows-runner: ${{ inputs.windows-runner }}
+      tensorrt-rtx-windows: ${{ inputs.tensorrt-rtx-windows }}
 
   build-vsmlrt-cuda:
     if: inputs.package == 'vsmlrt-cuda'
-    uses: ./.github/workflows/pkg-vsmlrt-cuda-cu12.yml
+    uses: ./.github/workflows/pkg-vsmlrt-cuda.yml
     with:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
-      tensorrt-windows: ${{ inputs.tensorrt-windows }}
+      cuda-linux: ${{ inputs.cuda-linux }}
       windows-runner: ${{ inputs.windows-runner }}
+      tensorrt-windows: ${{ inputs.tensorrt-windows }}
 
   create-release:
     name: Create CUDA12 Release
@@ -106,10 +127,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - name: Download all cu12 artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: "*-cu12*"
+          pattern: "*"
           path: dist
           merge-multiple: true
 
@@ -171,15 +192,11 @@ jobs:
           name: "VapourSynth ${{ steps.package.outputs.display_name }} CUDA 12 ${{ steps.version.outputs.version }}"
           files: dist/*
           body: |
-            CUDA 12 alternative build for Windows.
+            CUDA 12 Compatible Build.
 
             **Package:** ${{ steps.package.outputs.display_name }}
             **Version:** ${{ steps.version.outputs.version }}
-            **CUDA version:** ${{ inputs.cuda-windows }}
             **TensorRT version:** ${{ inputs.tensorrt-windows }}
             **TensorRT-RTX version:** ${{ inputs.tensorrt-rtx-windows }}
-
-            ## Contents
-            The `.whl` wheel with bundled CUDA and TensorRT runtime DLLs.
           fail_on_unmatched_files: true
           generate_release_notes: false

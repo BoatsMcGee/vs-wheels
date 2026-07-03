@@ -92,7 +92,6 @@ jobs:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
       cuda-linux: ${{ inputs.cuda-linux }}
-      windows-runner: ${{ inputs.windows-runner }}
       tensorrt-windows: ${{ inputs.tensorrt-windows }}
 
   build-trt-rtx:
@@ -102,7 +101,6 @@ jobs:
       version: ${{ inputs.version }}
       cuda-windows: ${{ inputs.cuda-windows }}
       cuda-linux: ${{ inputs.cuda-linux }}
-      windows-runner: ${{ inputs.windows-runner }}
       tensorrt-rtx-windows: ${{ inputs.tensorrt-rtx-windows }}
 
   build-vsmlrt-cuda:

@@ -15,6 +15,27 @@ on:
       - .github/workflows/pkg-dfttest2_cuda.yml
       - .github/actions/setup-cuda-linux/**
       - .github/actions/setup-cuda-windows/**
+  workflow_call:
+    inputs:
+      version:
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_CUDA)
+        type: string
+        required: false
+      cuda-linux:
+        description: CUDA version for Linux
+        type: string
+        required: false
+        default: "13.3"
+      cuda-windows:
+        description: CUDA version for Windows
+        type: string
+        required: false
+        default: "13.3.0"
+      windows-runner:
+        description: Windows runner to use
+        type: string
+        required: true
+        default: windows-2025-vs2026
   workflow_dispatch:
     inputs:
       publish:

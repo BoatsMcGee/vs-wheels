@@ -15,6 +15,27 @@ on:
       - .github/workflows/pkg-trt-rtx.yml
       - .github/actions/setup-cuda-*/**
       - .github/actions/setup-tensorrt-rtx-*/**
+  workflow_call:
+    inputs:
+      version:
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX)
+        type: string
+        required: false
+      cuda-windows:
+        description: CUDA version for Windows
+        type: string
+        required: false
+        default: "13.2.1"
+      cuda-linux:
+        description: CUDA version for Linux x86_64
+        type: string
+        required: false
+        default: "13.2"
+      tensorrt-rtx-windows:
+        description: TensorRT-RTX version for Windows
+        type: string
+        required: false
+        default: "1.5.0.114"
   workflow_dispatch:
     inputs:
       publish:

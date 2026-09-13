@@ -120,6 +120,26 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - name: Disable Windows Defender
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-MpPreference -DisableRealtimeMonitoring $true `
+                           -DisableBehaviorMonitoring $true `
+                           -DisableScriptScanning $true `
+                           -DisableIOAVProtection $true
+          Add-MpPreference -ExclusionPath "C:\", "D:\"
+          Add-MpPreference -ExclusionProcess "cl.exe", "link.exe", "ninja.exe", "nvcc.exe", "cicc.exe" -ErrorAction SilentlyContinue
+
+      - name: Verify Defender Status
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $pref = Get-MpPreference
+          Write-Host "Realtime Monitoring Disabled: $($pref.DisableRealtimeMonitoring)"
+          Write-Host "Excluded Paths: $($pref.ExclusionPath -join ', ')"
+          Write-Host "Excluded Processes: $($pref.ExclusionProcess -join ', ')"
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:

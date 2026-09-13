@@ -100,13 +100,13 @@ jobs:
             os: ubuntu-24.04
             container:
               image: quay.io/pypa/manylinux_2_28_x86_64
-              options: --user root -v /:/host
+              options: --privileged --user root -v /:/host
             cuda_repo: rhel8/x86_64
           - name: Linux ARM64
             os: ubuntu-24.04-arm
             container:
               image: quay.io/pypa/manylinux_2_28_aarch64
-              options: --user root -v /:/host
+              options: --privileged --user root -v /:/host
             cuda_repo: rhel8/sbsa
           - name: Windows x64
             os: windows-2025-vs2026
@@ -145,20 +145,39 @@ jobs:
           echo "=== Host disk space after ==="
           df -h /host
 
+          echo "=== Creating 16G swapfile on host ==="
+          if [ ! -f /host/swapfile ]; then
+            fallocate -l 16G /host/swapfile || dd if=/dev/zero of=/host/swapfile bs=1M count=16384
+            chmod 600 /host/swapfile
+            mkswap /host/swapfile
+            swapon /host/swapfile
+          fi
+          free -h
+
       - name: Free runner space (Windows)
         if: runner.os == 'Windows'
-        uses: justinthelaw/maximize-github-runner-space@c66ba0f3ad90f3f74aa2250d8ea645080be24da3 # v0.12.3
-        with:
-          cleanup-profile: custom
-          remove-android: "true"
-          remove-haskell: "true"
-          remove-codeql: "true"
-          remove-browsers: "true"
-          remove-julia: "true"
-          remove-miniconda: "true"
-          remove-docker-images: "true"
-          remove-docker-engine: "true"
-          remove-vcpkg: "true"
+        shell: pwsh
+        run: |
+          $before = (Get-PSDrive C).Free
+          Write-Host ("=== Available storage before: {0:N2} GiB ===" -f ($before / 1GB))
+
+          $dirs = @(
+            "${env:ProgramFiles(x86)}\Android",
+            "C:\vcpkg",
+            "C:\ghcup",
+            "C:\cabal",
+            "${env:ProgramData}\docker"
+          )
+          foreach ($dir in $dirs) {
+            if (Test-Path $dir) {
+              Write-Host "Removing $dir..."
+              cmd /c "rd /s /q `"$dir`"" 2>$null
+            }
+          }
+
+          $after = (Get-PSDrive C).Free
+          $reclaimed = [math]::Max(0, $after - $before)
+          Write-Host ("=== Available storage after: {0:N2} GiB (Reclaimed: {1:N2} GiB) ===" -f ($after / 1GB), ($reclaimed / 1GB))
 
       - name: Set up uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0

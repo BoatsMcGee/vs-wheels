@@ -98,11 +98,15 @@ jobs:
         include:
           - name: Linux x64
             os: ubuntu-24.04
-            container: quay.io/pypa/manylinux_2_28_x86_64
+            container:
+              image: quay.io/pypa/manylinux_2_28_x86_64
+              options: --user root -v /:/host
             cuda_repo: rhel8/x86_64
           - name: Linux ARM64
             os: ubuntu-24.04-arm
-            container: quay.io/pypa/manylinux_2_28_aarch64
+            container:
+              image: quay.io/pypa/manylinux_2_28_aarch64
+              options: --user root -v /:/host
             cuda_repo: rhel8/sbsa
           - name: Windows x64
             os: windows-2025-vs2026
@@ -125,6 +129,36 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive vsmlrt/${{ env.PACKAGE_NAME }}/vs-mlrt
+
+      - name: Free host runner space (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "=== Host disk space before ==="
+          df -h /host
+          echo "=== Purging host preinstalled bloat ==="
+          rm -rf /host/usr/share/dotnet
+          rm -rf /host/usr/local/lib/android
+          rm -rf /host/opt/ghc
+          rm -rf /host/opt/hostedtoolcache/CodeQL
+          rm -rf /host/opt/hostedtoolcache/Java*
+          rm -rf /host/usr/local/share/boost
+          echo "=== Host disk space after ==="
+          df -h /host
+
+      - name: Free runner space (Windows)
+        if: runner.os == 'Windows'
+        uses: justinthelaw/maximize-github-runner-space@c66ba0f3ad90f3f74aa2250d8ea645080be24da3 # v0.12.3
+        with:
+          cleanup-profile: custom
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-browsers: "true"
+          remove-julia: "true"
+          remove-miniconda: "true"
+          remove-docker-images: "true"
+          remove-docker-engine: "true"
+          remove-vcpkg: "true"
 
       - name: Set up uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
@@ -153,7 +187,7 @@ jobs:
           build-cuda: true
           cuda-version: ${{ env.CUDA_WINDOWS_VERSION }}
           cudnn-version: ${{ env.CUDNN_WINDOWS_VERSION }}
-          os: ${{ matrix.container || matrix.os }}
+          os: ${{ matrix.container.image || matrix.container || matrix.os }}
 
       - name: Build ONNX Runtime dependency (Linux)
         if: runner.os == 'Linux'
@@ -164,7 +198,13 @@ jobs:
           cuda-version: ${{ env.CUDA_LINUX_VERSION }}
           cuda-repo: ${{ matrix.cuda_repo }}
           cudnn-version: ${{ env.CUDNN_LINUX_VERSION }}
-          os: ${{ matrix.container || matrix.os }}
+          os: ${{ matrix.container.image || matrix.container || matrix.os }}
+
+      - name: Prune ONNX Runtime build artifacts (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          rm -rf build_onnxruntime
+          dnf clean all && rm -rf /var/cache/dnf
 
       - name: Build ONNX Runtime dependency (macOS)
         if: runner.os == 'macOS'
@@ -181,12 +221,16 @@ jobs:
           version=$(git -C onnxruntime/cmake/external/onnx/ describe --exact-match --tags 2>/dev/null || git -C onnxruntime/cmake/external/onnx/ rev-parse HEAD)
           echo "version=$version" | tee -a $GITHUB_OUTPUT
 
+      - name: Prune ONNX Runtime source tree (Linux)
+        if: runner.os == 'Linux'
+        run: rm -rf onnxruntime
+
       - name: Build ONNX dependency (Windows)
         if: runner.os == 'Windows'
         uses: ./.github/actions/setup-onnx-windows
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
-          os: ${{ matrix.container || matrix.os }}
+          os: ${{ matrix.container.image || matrix.container || matrix.os }}
           msvc-runtime: MultiThreadedDLL
 
       - name: Build ONNX dependency (Linux)
@@ -194,14 +238,14 @@ jobs:
         uses: ./.github/actions/setup-onnx-linux
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
-          os: ${{ matrix.container || matrix.os }}
+          os: ${{ matrix.container.image || matrix.container || matrix.os }}
 
       - name: Build ONNX dependency (macOS)
         if: runner.os == 'macOS'
         uses: ./.github/actions/setup-onnx-macos
         with:
           onnx-tag: ${{ steps.get-onnx-version.outputs.version }}
-          os: ${{ matrix.container || matrix.os }}
+          os: ${{ matrix.os }}
 
       - name: Build wheel
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }} -C "cmake.define.INSTALL_CUDA=OFF"

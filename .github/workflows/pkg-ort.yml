@@ -146,12 +146,13 @@ jobs:
           df -h /host
 
           echo "=== Creating 16G swapfile on host ==="
-          if [ ! -f /host/swapfile ]; then
-            fallocate -l 16G /host/swapfile || dd if=/dev/zero of=/host/swapfile bs=1M count=16384
-            chmod 600 /host/swapfile
-            mkswap /host/swapfile
-            swapon /host/swapfile
+          if [ ! -f /host/swapfile_extra ]; then
+            dd if=/dev/zero of=/host/swapfile_extra bs=1M count=16384 status=none
+            chmod 600 /host/swapfile_extra
+            mkswap /host/swapfile_extra
+            swapon /host/swapfile_extra
           fi
+          cat /proc/swaps
           free -h
 
       - name: Free runner space (Windows)
@@ -176,7 +177,7 @@ jobs:
           }
 
           $after = (Get-PSDrive C).Free
-          $reclaimed = [math]::Max(0, $after - $before)
+          $reclaimed = if ($after -gt $before) { $after - $before } else { 0 }
           Write-Host ("=== Available storage after: {0:N2} GiB (Reclaimed: {1:N2} GiB) ===" -f ($after / 1GB), ($reclaimed / 1GB))
 
       - name: Set up uv

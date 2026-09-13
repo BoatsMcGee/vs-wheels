@@ -175,31 +175,6 @@ jobs:
           cat /proc/swaps
           free -h
 
-      - name: Free runner space (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $before = (Get-PSDrive C).Free
-          Write-Host ("=== Available storage before: {0:N2} GiB ===" -f ($before / 1GB))
-
-          $dirs = @(
-            "${env:ProgramFiles(x86)}\Android",
-            "C:\vcpkg",
-            "C:\ghcup",
-            "C:\cabal",
-            "${env:ProgramData}\docker"
-          )
-          foreach ($dir in $dirs) {
-            if (Test-Path $dir) {
-              Write-Host "Removing $dir..."
-              cmd /c "rd /s /q `"$dir`"" 2>$null
-            }
-          }
-
-          $after = (Get-PSDrive C).Free
-          $reclaimed = if ($after -gt $before) { $after - $before } else { 0 }
-          Write-Host ("=== Available storage after: {0:N2} GiB (Reclaimed: {1:N2} GiB) ===" -f ($after / 1GB), ($reclaimed / 1GB))
-
       - name: Set up uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:

@@ -69,6 +69,37 @@ runs:
         path: onnxruntime-dist
         key: ${{ steps.cache-key.outputs.key }}
 
+    - name: Free runner space (Windows)
+      if: steps.cache-onnx.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: |
+        $before = (Get-PSDrive C).Free
+        Write-Host ("=== Available storage before: {0:N2} GiB ===" -f ($before / 1GB))
+
+        $empty = New-Item -ItemType Directory -Path "$env:TEMP\empty_dir" -Force
+
+        $dirs = @(
+          "${env:ProgramFiles(x86)}\Android",
+          "C:\vcpkg",
+          "C:\ghcup",
+          "C:\cabal",
+          "${env:ProgramData}\docker"
+        )
+        foreach ($dir in $dirs) {
+          if (Test-Path $dir) {
+            Write-Host "Removing $dir..."
+            robocopy $empty.FullName $dir /mir /r:0 /w:0 /nfl /ndl /np /mt:32 | Out-Null
+            cmd /c "rd /s /q `"$dir`"" 2>$null
+            $global:LASTEXITCODE = 0
+          }
+        }
+
+        Remove-Item $empty.FullName -Recurse -Force -ErrorAction SilentlyContinue
+
+        $after = (Get-PSDrive C).Free
+        $reclaimed = if ($after -gt $before) { $after - $before } else { 0 }
+        Write-Host ("=== Available storage after: {0:N2} GiB (Reclaimed: {1:N2} GiB) ===" -f ($after / 1GB), ($reclaimed / 1GB))
+
     - name: Setup CUDA
       uses: ./.github/actions/setup-cuda-windows
       if: inputs.build-cuda == 'true'

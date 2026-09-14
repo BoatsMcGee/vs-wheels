@@ -1,6 +1,6 @@
 # VapourSynth-DFTTEST2_CPU
 
-This package contains the CPU implementation of the [vs-dfttest2](https://github.com/AmusementClub/vs-dfttest2) implemetation.
+This package contains the CPU implementation of the [vs-dfttest2](https://github.com/Ichunjo/vs-dfttest2) implementation.
 
 ## Installation
 

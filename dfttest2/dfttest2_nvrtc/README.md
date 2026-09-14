@@ -1,6 +1,6 @@
 # VapourSynth-DFTTEST2_NVRTC
 
-This package contains the NVRTC implementation of the [vs-dfttest2](https://github.com/AmusementClub/vs-dfttest2) implemetation.
+This package contains the NVRTC implementation of the [vs-dfttest2](https://github.com/Ichunjo/vs-dfttest2) implementation.
 
 ## Installation
 

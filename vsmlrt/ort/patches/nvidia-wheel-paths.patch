@@ -1,0 +1,33 @@
+diff --git a/vsort/win32.cpp b/vsort/win32.cpp
+--- a/vsort/win32.cpp
++++ b/vsort/win32.cpp
+@@ -19,6 +19,15 @@
+ 
+ #define DLL_DIR L"vsort"
+ #define COMMON_CUDA_DIR L"vsmlrt-cuda"
++// CUDA 12 nvidia PyPI wheels install DLLs under site-packages/nvidia/<pkg>/bin,
++// which are not on the default DLL search path. See the CUDA 12 builds in .github/workflows.
++#define NVIDIA_CUDA12_RUNTIME_DIR L"../../../nvidia/cuda_runtime/bin"  // cudart64_12.dll
++#define NVIDIA_CUDA12_CUBLAS_DIR L"../../../nvidia/cublas/bin"  // cublas64_12.dll
++#define NVIDIA_CUDA12_CUFFT_DIR L"../../../nvidia/cufft/bin"  // cufft64_11.dll
++#define NVIDIA_CUDA12_CUPTI_DIR L"../../../nvidia/cuda_cupti/bin"  // cupti64_*.dll
++#define NVIDIA_CUDA12_CURAND_DIR L"../../../nvidia/curand/bin"  // curand64_10.dll
++#define NVIDIA_CUDA12_NVRTC_DIR L"../../../nvidia/cuda_nvrtc/bin"  // nvrtc64_120_0.dll
++#define NVIDIA_CUDA12_NVJITLINK_DIR L"../../../nvidia/nvjitlink/bin"  // nvJitLink_120_0.dll
+ #define NVIDIA_CUDA_DIR L"../../../nvidia/cu13/bin/x86_64"
+ #define NVIDIA_CUDNN_DIR L"../../../nvidia/cudnn/bin"
+ 
+@@ -176,6 +185,13 @@
+     findDllIn(dir / COMMON_CUDA_DIR);
+     findDllIn(dir / NVIDIA_CUDA_DIR);
+     findDllIn(dir / NVIDIA_CUDNN_DIR);
++    findDllIn(dir / NVIDIA_CUDA12_RUNTIME_DIR);
++    findDllIn(dir / NVIDIA_CUDA12_CUBLAS_DIR);
++    findDllIn(dir / NVIDIA_CUDA12_CUFFT_DIR);
++    findDllIn(dir / NVIDIA_CUDA12_CUPTI_DIR);
++    findDllIn(dir / NVIDIA_CUDA12_CURAND_DIR);
++    findDllIn(dir / NVIDIA_CUDA12_NVRTC_DIR);
++    findDllIn(dir / NVIDIA_CUDA12_NVJITLINK_DIR);
+ 
+     if (verbose()) {
+         for (const auto pair : dllmap)

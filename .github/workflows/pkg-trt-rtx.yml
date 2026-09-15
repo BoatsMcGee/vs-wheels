@@ -15,6 +15,24 @@ on:
       - .github/workflows/pkg-trt-rtx.yml
       - .github/actions/setup-cuda-*/**
       - .github/actions/setup-tensorrt-rtx-*/**
+  workflow_call:
+    inputs:
+      version:
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX)
+        type: string
+        required: false
+      cuda-windows:
+        description: CUDA version for Windows
+        type: string
+        required: false
+      cuda-linux:
+        description: CUDA version for Linux x86_64
+        type: string
+        required: false
+      tensorrt-rtx-windows:
+        description: TensorRT-RTX version for Windows
+        type: string
+        required: false
   workflow_dispatch:
     inputs:
       publish:
@@ -83,7 +101,7 @@ jobs:
             cuda-repo: rhel10/sbsa
             container: quay.io/pypa/manylinux_2_39_aarch64
           - name: Windows x64
-            os: windows-2025-vs2026
+            os: ${{ inputs.cuda-windows && startsWith(inputs.cuda-windows, '12') && 'windows-2022' || 'windows-2025-vs2026' }}
 
     name: Build wheels on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -99,6 +117,35 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive vsmlrt/${{ env.PACKAGE_NAME }}/vs-mlrt
+
+      - name: Adjust TensorRT RTX dependency for CUDA version (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $cudaMajor = "${{ env.CUDA_WINDOWS_VERSION }}".Split(".")[0]
+          $pyproject = "vsmlrt/trt_rtx/pyproject.toml"
+          $content = Get-Content $pyproject -Raw
+          # Pin the pip runtime libs to the same TensorRT-RTX version the headers come from.
+          $newContent = $content -replace 'tensorrt-rtx-cu\d+-libs==[^"]+', "tensorrt-rtx-cu$cudaMajor-libs==${{ env.TENSORRT_RTX_WINDOWS_VERSION }}"
+          if ($content -ne $newContent) {
+            Set-Content $pyproject $newContent -NoNewline
+            Write-Host "Changed TensorRT RTX dependency to tensorrt-rtx-cu$cudaMajor-libs==${{ env.TENSORRT_RTX_WINDOWS_VERSION }}"
+          } else {
+            Write-Host "No change needed (already tensorrt-rtx-cu$cudaMajor-libs or pattern not found)"
+          }
+
+      - name: Adjust TensorRT RTX dependency for CUDA version (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          CUDA_MAJOR=$(echo "${{ env.CUDA_LINUX_VERSION }}" | cut -d. -f1)
+          pyproject="vsmlrt/trt_rtx/pyproject.toml"
+          if grep -q "tensorrt-rtx-cu[0-9]*-libs" "$pyproject"; then
+            sed -i "s/tensorrt-rtx-cu[0-9]*-libs/tensorrt-rtx-cu${CUDA_MAJOR}-libs/g" "$pyproject"
+            echo "Changed TensorRT RTX dependency to tensorrt-rtx-cu${CUDA_MAJOR}-libs"
+          else
+            echo "No change needed (already tensorrt-rtx-cu${CUDA_MAJOR}-libs or pattern not found)"
+          fi
 
       - name: Set up uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
@@ -156,6 +203,7 @@ jobs:
         run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT_RTX: ${{ inputs.version }}
+          CMAKE_CUDA_FLAGS: ${{ runner.os == 'Windows' && startsWith(env.CUDA_WINDOWS_VERSION, '12') && '-allow-unsupported-compiler' || '' }}
 
       - name: Repair wheel (Linux)
         if: runner.os == 'Linux'

@@ -1,0 +1,33 @@
+diff --git a/cuda_source/win32.cpp b/cuda_source/win32.cpp
+--- a/cuda_source/win32.cpp
++++ b/cuda_source/win32.cpp
+@@ -16,6 +16,12 @@
+ #include <vector>
+ 
+ #define DLL_DIR L"vsmlrt-cuda"
++// CUDA 12 nvidia PyPI wheels install DLLs under site-packages/nvidia/<pkg>/bin,
++// which are not on the default DLL search path. See the CUDA 12 builds in .github/workflows.
++#define NVIDIA_CUDA12_RUNTIME_DIR L"../../../nvidia/cuda_runtime/bin"  // cudart64_12.dll
++#define NVIDIA_CUDA12_CUFFT_DIR L"../../../nvidia/cufft/bin"  // cufft64_11.dll
++#define NVIDIA_CUDA12_NVRTC_DIR L"../../../nvidia/cuda_nvrtc/bin"  // nvrtc64_120_0.dll
++#define NVIDIA_CUDA12_NVJITLINK_DIR L"../../../nvidia/nvjitlink/bin"  // nvJitLink_120_0.dll
+ #define NVIDIA_CUDA_DIR L"../../../nvidia/cu13/bin/x86_64"
+ 
+ #include <iostream>
+@@ -47,7 +53,15 @@
+ 
+ FARPROC loadDLLs(std::string dll) {
+     std::wstring wdll(dll.begin(), dll.end());
+-    std::vector<fs::path> dirs = {dllDir() / DLL_DIR, dllDir() / NVIDIA_CUDA_DIR};
++    std::vector<fs::path> dirs = {
++        dllDir(),
++        dllDir() / DLL_DIR,
++        dllDir() / NVIDIA_CUDA12_RUNTIME_DIR,
++        dllDir() / NVIDIA_CUDA12_CUFFT_DIR,
++        dllDir() / NVIDIA_CUDA12_NVRTC_DIR,
++        dllDir() / NVIDIA_CUDA12_NVJITLINK_DIR,
++        dllDir() / NVIDIA_CUDA_DIR,
++    };
+     HMODULE h = nullptr;
+     for (const auto& dir : dirs) {
+         fs::path p = dir / wdll;

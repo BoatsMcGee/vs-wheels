@@ -15,6 +15,24 @@ on:
       - .github/workflows/pkg-dfttest2_nvrtc.yml
       - .github/actions/setup-cuda-linux/**
       - .github/actions/setup-cuda-windows/**
+  workflow_call:
+    inputs:
+      version:
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_NVRTC)
+        type: string
+        required: false
+      cuda-linux:
+        description: CUDA version for Linux
+        type: string
+        required: false
+      cuda-windows:
+        description: CUDA version for Windows
+        type: string
+        required: false
+      windows-runner:
+        description: Windows runner to use
+        type: string
+        required: false
   workflow_dispatch:
     inputs:
       publish:
@@ -72,7 +90,7 @@ jobs:
             arch: sbsa
             container: quay.io/pypa/manylinux_2_28_aarch64
             cuda_repo: rhel8/sbsa
-          - os: ${{ inputs.windows-runner || 'windows-2025-vs2026' }}
+          - os: ${{ (inputs.cuda-windows && startsWith(inputs.cuda-windows, '12') && 'windows-2022') || inputs.windows-runner || 'windows-2025-vs2026' }}
             arch: amd64
 
     name: Build wheels on ${{ matrix.os }}
@@ -129,6 +147,7 @@ jobs:
         run: uv build --package vapoursynth-${{ env.PACKAGE_NAME }}
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_DFTTEST2_NVRTC: ${{ inputs.version }}
+          CMAKE_CUDA_FLAGS: ${{ runner.os == 'Windows' && startsWith(env.CUDA_WINDOWS, '12') && '-allow-unsupported-compiler' || '' }}
 
       - name: Repair wheel (Linux)
         if: runner.os == 'Linux'

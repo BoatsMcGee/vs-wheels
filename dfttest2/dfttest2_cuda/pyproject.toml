@@ -34,7 +34,8 @@ if.platform-system = "^win32"
 inherit.cmake.define = "append"
 cmake.define.CMAKE_MSVC_RUNTIME_LIBRARY = "MultiThreaded"
 cmake.define.CMAKE_CXX_FLAGS = "/fp:fast /EHsc"
-cmake.define.CMAKE_SHARED_LINKER_FLAGS = "/DELAYLOAD:cufft64_12.dll"
+cmake.define.CMAKE_SHARED_LINKER_FLAGS = "delayimp.lib"
+cmake.define.CUFFTT_DELAYLOAD_DLL = "cufft64_12.dll"
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "^linux"

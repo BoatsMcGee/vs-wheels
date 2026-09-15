@@ -38,10 +38,16 @@ jobs:
         with:
           enable-cache: false
 
-      - name: Generate PEP 503 index
+      - name: Generate main PEP 503 index
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: uv run --script scripts/generate_index.py _site
+
+      - name: Generate CUDA 12 filtered index
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          INDEX_FILTER: "cuda12"
+        run: uv run --script scripts/generate_index.py _site/simple-cuda12
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5

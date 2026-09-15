@@ -17,6 +17,24 @@ on:
       - .github/actions/setup-cuda-*/**
       - .github/actions/setup-tensorrt-linux-*/**
       - .github/actions/setup-tensorrt-windows/**
+  workflow_call:
+    inputs:
+      version:
+        description: Version override (SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_TRT)
+        type: string
+        required: false
+      cuda-windows:
+        description: CUDA version for Windows
+        type: string
+        required: false
+      cuda-linux:
+        description: CUDA version for Linux (both x86_64 and aarch64)
+        type: string
+        required: false
+      tensorrt-windows:
+        description: TensorRT version for Windows
+        type: string
+        required: false
   workflow_dispatch:
     inputs:
       publish:
@@ -69,8 +87,8 @@ on:
 
 env:
   CUDA_WINDOWS_VERSION: ${{ inputs.cuda-windows || '13.4.1' }}
-  CUDA_LINUX_x86_64_VERSION: ${{ inputs.cuda-linux-x86-64 || '13.4' }}
-  CUDA_LINUX_AARCH64_VERSION: ${{ inputs.cuda-linux-aarch64 || '13.4' }}
+  CUDA_LINUX_x86_64_VERSION: ${{ inputs.cuda-linux || inputs.cuda-linux-x86-64 || '13.4' }}
+  CUDA_LINUX_AARCH64_VERSION: ${{ inputs.cuda-linux || inputs.cuda-linux-aarch64 || '13.4' }}
   TENSORRT_WINDOWS_VERSION: ${{ inputs.tensorrt-windows || '11.3.0.99' }} # renovate: datasource=pypi depName=tensorrt-cu13-libs
   TENSORRT_LINUX_VERSION: ${{ inputs.tensorrt-linux || '11.3.0.99-1.cuda13.4' }} # renovate: datasource=custom.nvidia-tensorrt-rhel8-cuda13-3 depName=nvidia-tensorrt-rhel8-cuda13-3
   TENSORRT_LINUX_AARCH64_VERSION: ${{ inputs.tensorrt-linux-aarch64 || '11.3.0.99-1+cuda13.4' }} # renovate: datasource=custom.nvidia-tensorrt-ubuntu2404-cuda13-3 depName=nvidia-tensorrt-ubuntu2404-cuda13-3
@@ -90,7 +108,7 @@ jobs:
             os: ubuntu-24.04-arm
             cuda_repo: ubuntu2404/sbsa/
           - name: Windows x64
-            os: windows-2025-vs2026
+            os: ${{ inputs.cuda-windows && startsWith(inputs.cuda-windows, '12') && 'windows-2022' || 'windows-2025-vs2026' }}
 
     name: Build wheels on ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -111,6 +129,35 @@ jobs:
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           enable-cache: false
+
+      - name: Adjust TensorRT dependency for CUDA version (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $cudaMajor = "${{ env.CUDA_WINDOWS_VERSION }}".Split(".")[0]
+          $pyproject = "vsmlrt/trt/pyproject.toml"
+          $content = Get-Content $pyproject -Raw
+          # Pin the pip runtime libs to the same TensorRT version the headers come from.
+          $newContent = $content -replace 'tensorrt-cu\d+-libs==[^"]+', "tensorrt-cu$cudaMajor-libs==${{ env.TENSORRT_WINDOWS_VERSION }}"
+          if ($content -ne $newContent) {
+            Set-Content $pyproject $newContent -NoNewline
+            Write-Host "Changed TensorRT dependency to tensorrt-cu$cudaMajor-libs==${{ env.TENSORRT_WINDOWS_VERSION }}"
+          } else {
+            Write-Host "No change needed (already tensorrt-cu$cudaMajor-libs or pattern not found)"
+          }
+
+      - name: Adjust TensorRT dependency for CUDA version (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          CUDA_MAJOR=$(echo "${{ env.CUDA_LINUX_x86_64_VERSION }}" | cut -d. -f1)
+          pyproject="vsmlrt/trt/pyproject.toml"
+          if grep -q "tensorrt-cu[0-9]*-libs" "$pyproject"; then
+            sed -i "s/tensorrt-cu[0-9]*-libs/tensorrt-cu${CUDA_MAJOR}-libs/g" "$pyproject"
+            echo "Changed TensorRT dependency to tensorrt-cu${CUDA_MAJOR}-libs"
+          else
+            echo "No change needed (already tensorrt-cu${CUDA_MAJOR}-libs or pattern not found)"
+          fi
 
       - name: Setup MSVC
         if: runner.os == 'Windows'

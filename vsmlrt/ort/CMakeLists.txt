@@ -6,6 +6,22 @@ endif()
 
 project(VSORT_Package VERSION "${SKBUILD_PROJECT_VERSION}" LANGUAGES CXX)
 
+# === Apply patches ===
+# Opt-in: adds the nvidia PyPI wheel DLL search directories used by CUDA 12 builds.
+# Defaults to OFF so a plain (CUDA 13) build compiles the upstream source unchanged.
+option(ORT_APPLY_DLL_PATH_PATCH "Apply nvidia-wheel-paths.patch (CUDA 12 wheel DLL search paths)" OFF)
+set(SRC_VSORT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vs-mlrt")
+if(ORT_APPLY_DLL_PATH_PATCH)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/ApplyPatch.cmake")
+  add_patched_source(
+    PATCHED_WIN32
+    "${SRC_VSORT_DIR}/vsort/win32.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/patches/nvidia-wheel-paths.patch"
+  )
+else()
+  set(PATCHED_WIN32 "${SRC_VSORT_DIR}/vsort/win32.cpp")
+endif()
+
 # === C++ Standard & Options ===
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -57,7 +73,7 @@ add_library(
   vsort
   SHARED
   vs-mlrt/vsort/vs_onnxruntime.cpp
-  vs-mlrt/vsort/win32.cpp
+  "${PATCHED_WIN32}"
   vs-mlrt/common/onnx_utils.cpp
   vs-mlrt/common/convert_float_to_float16.cpp
 )
@@ -72,9 +88,16 @@ if(UNIX)
     set_target_properties(vsort PROPERTIES INSTALL_RPATH "@loader_path")
   else()
     if(ENABLE_CUDA)
+      # Extract CUDA major version (e.g. "12.9.2" -> 12) to build the correct
+      # nvidia PyPI runtime library path.
+      string(REGEX MATCH
+             "^([0-9]+)"
+             _CUDA_MAJOR
+             "${CUDAToolkit_VERSION}"
+      )
       set_target_properties(
         vsort
-        PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../../../nvidia/cu13/lib;$ORIGIN/../../../nvidia/cudnn/lib"
+        PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../../../nvidia/cu${_CUDA_MAJOR}/lib;$ORIGIN/../../../nvidia/cudnn/lib"
       )
     else()
       set_target_properties(vsort PROPERTIES INSTALL_RPATH "$ORIGIN")

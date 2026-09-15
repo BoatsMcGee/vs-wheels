@@ -49,21 +49,40 @@ runs:
       run: |
         $cudaVersion = $env:CUDA_VERSION_WINDOWS
         $cudaShort = $env:CUDA_VERSION_WINDOWS_SHORT
-        if ("${{ inputs.preview-link }}" -eq "true") {
+        $cudaMajor = $cudaVersion.Split(".")[0]
+
+        if ($cudaMajor -eq "12") {
+          # CUDA 12: use the local (offline) installer. Component-specific
+          # installation is unreliable with the local installer.
+          $url = "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/local_installers/cuda_${cudaVersion}_576.57_windows.exe"
+          Write-Host "Downloading CUDA $cudaVersion local installer from $url"
+          curl.exe -s -o cuda_installer.exe -L $url
+          if (-not (Test-Path cuda_installer.exe) -or (Get-Item cuda_installer.exe).Length -lt 1MB) {
+            Write-Error "Failed to download CUDA installer. The file is missing or too small."
+            exit 1
+          }
+          $proc = Start-Process ./cuda_installer.exe -ArgumentList "-s" -Wait -PassThru
+          Write-Host "Installer exit code: $($proc.ExitCode)"
+        } elseif ("${{ inputs.preview-link }}" -eq "true") {
           $url = "https://packages.nvidia.com/prerelease/cuda/$cudaVersion/local_installers/cuda_${cudaVersion}_windows_x86_64.exe"
-        } elseif ([version]$cudaVersion -ge [version]"13.4") {
-          $url = "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/network_installers/cuda_${cudaVersion}_windows_x86_64_network.exe"
+          curl.exe -s -o cuda_installer.exe -L $url
+          $components = "${{ inputs.cuda-components }}".Split(',') | ForEach-Object { $_.Trim() }
+          $installArgs = @("-s")
+          foreach ($comp in $components) { $installArgs += "${comp}_$cudaShort" }
+          Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait
         } else {
-          $url = "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/network_installers/cuda_${cudaVersion}_windows_network.exe"
+          if ([version]$cudaVersion -ge [version]"13.4") {
+            $url = "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/network_installers/cuda_${cudaVersion}_windows_x86_64_network.exe"
+          } else {
+            $url = "https://developer.download.nvidia.com/compute/cuda/$cudaVersion/network_installers/cuda_${cudaVersion}_windows_network.exe"
+          }
+          Write-Host "Downloading CUDA from $url"
+          curl.exe -s -o cuda_installer.exe -L $url
+          $components = "${{ inputs.cuda-components }}".Split(',') | ForEach-Object { $_.Trim() }
+          $installArgs = @("-s")
+          foreach ($comp in $components) { $installArgs += "${comp}_$cudaShort" }
+          Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait
         }
-        Write-Host "Downloading CUDA from $url"
-        curl.exe -s -o cuda_installer.exe -L $url
-        $components = "${{ inputs.cuda-components }}".Split(',') | ForEach-Object { $_.Trim() }
-        $installArgs = @("-s")
-        foreach ($comp in $components) {
-            $installArgs += "${comp}_$cudaShort"
-        }
-        Start-Process ./cuda_installer.exe -ArgumentList $installArgs -Wait
 
     - name: Cache CUDA (Windows)
       if: steps.cache-cuda.outputs.cache-hit != 'true'

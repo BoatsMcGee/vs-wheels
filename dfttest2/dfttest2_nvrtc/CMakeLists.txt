@@ -46,6 +46,31 @@ if(NOT NVCC_EXECUTABLE)
 endif()
 
 set(KERNELS_CU "${SRC_DFTTEST2_DIR}/nvrtc_source/kernels.cu")
+
+# GPU architectures baked into the AOT fatbin. CUDA 12 includes Pascal and Volta,
+# which are not supported by CUDA 13. Keep this derived from the toolkit so both
+# dedicated cu12 and shared workflows use the correct architecture set.
+if(CUDAToolkit_VERSION_MAJOR LESS 13)
+  set(DFTTEST2_NVRTC_GENCODE
+      "-gencode arch=compute_61,code=sm_61"
+      "-gencode arch=compute_70,code=sm_70"
+      "-gencode arch=compute_75,code=sm_75"
+      "-gencode arch=compute_86,code=sm_86"
+      "-gencode arch=compute_89,code=sm_89"
+      "-gencode arch=compute_75,code=compute_75"
+  )
+else()
+  set(DFTTEST2_NVRTC_GENCODE
+      "-gencode arch=compute_75,code=sm_75"
+      "-gencode arch=compute_80,code=sm_80"
+      "-gencode arch=compute_86,code=sm_86"
+      "-gencode arch=compute_89,code=sm_89"
+      "-gencode arch=compute_90,code=sm_90"
+      "-gencode arch=compute_120,code=sm_120"
+      "-gencode arch=compute_75,code=compute_75"
+  )
+endif()
+
 set(FATBIN_OUT "${CMAKE_CURRENT_BINARY_DIR}/kernels.fatbin")
 set(FATBIN_HEADER "${CMAKE_CURRENT_BINARY_DIR}/kernels_fatbin.h")
 
@@ -58,13 +83,7 @@ add_custom_command(
           -O3
           --use_fast_math
           --threads 0
-          -gencode arch=compute_75,code=sm_75
-          -gencode arch=compute_80,code=sm_80
-          -gencode arch=compute_86,code=sm_86
-          -gencode arch=compute_89,code=sm_89
-          -gencode arch=compute_90,code=sm_90
-          -gencode arch=compute_120,code=sm_120
-          -gencode arch=compute_75,code=compute_75
+          ${DFTTEST2_NVRTC_GENCODE}
           "${KERNELS_CU}"
           -o "${FATBIN_OUT}"
   COMMAND "${Python3_EXECUTABLE}"
@@ -125,7 +144,14 @@ if(UNIX)
   target_link_libraries(dfttest2_nvrtc PRIVATE :libcuda.so.1)
   target_link_options(dfttest2_nvrtc PRIVATE "-Wl,--exclude-libs,ALL")
   set_target_properties(dfttest2_nvrtc PROPERTIES CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
-  set_target_properties(dfttest2_nvrtc PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../../../nvidia/cu13/lib")
+  # Extract CUDA major version (e.g. "12.9.2" -> 12) to build the correct
+  # nvidia PyPI runtime library path.
+  string(REGEX MATCH
+         "^([0-9]+)"
+         _CUDA_MAJOR
+         "${CUDAToolkit_VERSION}"
+  )
+  set_target_properties(dfttest2_nvrtc PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../../../nvidia/cu${_CUDA_MAJOR}/lib")
 endif()
 
 add_custom_target(build_nvrtc ALL DEPENDS dfttest2_nvrtc)

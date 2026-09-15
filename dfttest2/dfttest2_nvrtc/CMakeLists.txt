@@ -52,22 +52,22 @@ set(KERNELS_CU "${SRC_DFTTEST2_DIR}/nvrtc_source/kernels.cu")
 # dedicated cu12 and shared workflows use the correct architecture set.
 if(CUDAToolkit_VERSION_MAJOR LESS 13)
   set(DFTTEST2_NVRTC_GENCODE
-      "-gencode arch=compute_61,code=sm_61"
-      "-gencode arch=compute_70,code=sm_70"
-      "-gencode arch=compute_75,code=sm_75"
-      "-gencode arch=compute_86,code=sm_86"
-      "-gencode arch=compute_89,code=sm_89"
-      "-gencode arch=compute_75,code=compute_75"
+      "-gencode" "arch=compute_61,code=sm_61"
+      "-gencode" "arch=compute_70,code=sm_70"
+      "-gencode" "arch=compute_75,code=sm_75"
+      "-gencode" "arch=compute_86,code=sm_86"
+      "-gencode" "arch=compute_89,code=sm_89"
+      "-gencode" "arch=compute_75,code=compute_75"
   )
 else()
   set(DFTTEST2_NVRTC_GENCODE
-      "-gencode arch=compute_75,code=sm_75"
-      "-gencode arch=compute_80,code=sm_80"
-      "-gencode arch=compute_86,code=sm_86"
-      "-gencode arch=compute_89,code=sm_89"
-      "-gencode arch=compute_90,code=sm_90"
-      "-gencode arch=compute_120,code=sm_120"
-      "-gencode arch=compute_75,code=compute_75"
+      "-gencode" "arch=compute_75,code=sm_75"
+      "-gencode" "arch=compute_80,code=sm_80"
+      "-gencode" "arch=compute_86,code=sm_86"
+      "-gencode" "arch=compute_89,code=sm_89"
+      "-gencode" "arch=compute_90,code=sm_90"
+      "-gencode" "arch=compute_120,code=sm_120"
+      "-gencode" "arch=compute_75,code=compute_75"
   )
 endif()
 

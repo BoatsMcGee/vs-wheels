@@ -297,7 +297,7 @@ jobs:
           os: ${{ matrix.os }}
 
       - name: Build wheel
-        run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }} -C "cmake.define.INSTALL_CUDA=OFF"
+        run: uv build --package vapoursynth-mlrt-${{ env.PACKAGE_NAME }} -C "cmake.define.INSTALL_CUDA=OFF"${{ runner.os == 'Windows' && startsWith(env.CUDA_WINDOWS_VERSION, '12') && ' -C "cmake.define.ORT_APPLY_DLL_PATH_PATCH=ON"' || '' }}
         env:
           DML_DIR: ${{ steps.setup-onnxruntime-windows.outputs.dml-path }}
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VAPOURSYNTH_MLRT_ORT: ${{ inputs.version }}
@@ -356,7 +356,14 @@ jobs:
               if [ -f "$f" ] && [ ! -L "$f" ]; then
                 echo "  Setting RPATH on: $(basename "$f")"
                 CUDA_MAJOR=$(echo "${{ env.CUDA_LINUX_VERSION }}" | cut -d. -f1)
-                patchelf --set-rpath "\$ORIGIN:\$ORIGIN/../../../nvidia/cu${CUDA_MAJOR}/lib:\$ORIGIN/../../../nvidia/cudnn/lib" "$f"
+                # CUDA 13 nvidia wheels use a consolidated layout (nvidia/cu13/lib);
+                # CUDA 12 wheels install per-component directories.
+                if [ "$CUDA_MAJOR" -lt 13 ]; then
+                  NVIDIA_RPATH="\$ORIGIN/../../../nvidia/cublas/lib:\$ORIGIN/../../../nvidia/cuda_runtime/lib:\$ORIGIN/../../../nvidia/cuda_cupti/lib:\$ORIGIN/../../../nvidia/curand/lib:\$ORIGIN/../../../nvidia/cufft/lib:\$ORIGIN/../../../nvidia/cuda_nvrtc/lib:\$ORIGIN/../../../nvidia/nvjitlink/lib:\$ORIGIN/../../../nvidia/cudnn/lib"
+                else
+                  NVIDIA_RPATH="\$ORIGIN/../../../nvidia/cu${CUDA_MAJOR}/lib:\$ORIGIN/../../../nvidia/cudnn/lib"
+                fi
+                patchelf --set-rpath "\$ORIGIN:${NVIDIA_RPATH}" "$f"
               fi
             done
             rm "$whl"

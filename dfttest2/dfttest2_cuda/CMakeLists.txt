@@ -163,7 +163,13 @@ if(UNIX)
          _CUDA_MAJOR
          "${CUDAToolkit_VERSION}"
   )
-  set_target_properties(dfttest2_cuda PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../../../nvidia/cu${_CUDA_MAJOR}/lib")
+  # CUDA 13 nvidia wheels use a consolidated layout (nvidia/cu13/lib);
+  # CUDA 12 wheels install per-component directories.
+  if(_CUDA_MAJOR LESS 13)
+    set_target_properties(dfttest2_cuda PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../../../nvidia/cufft/lib;$ORIGIN/../../../nvidia/cuda_nvrtc/lib;$ORIGIN/../../../nvidia/nvjitlink/lib")
+  else()
+    set_target_properties(dfttest2_cuda PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../../../nvidia/cu${_CUDA_MAJOR}/lib")
+  endif()
 endif()
 
 add_custom_target(build_cuda ALL DEPENDS dfttest2_cuda)

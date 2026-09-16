@@ -95,9 +95,26 @@ if(UNIX)
              _CUDA_MAJOR
              "${CUDAToolkit_VERSION}"
       )
+      # CUDA 13 nvidia wheels use a consolidated layout (nvidia/cu13/lib);
+      # CUDA 12 wheels install per-component directories.
+      if(_CUDA_MAJOR LESS 13)
+        set(_NVIDIA_RPATH
+            "$ORIGIN/../../../nvidia/cublas/lib"
+            "$ORIGIN/../../../nvidia/cuda_runtime/lib"
+            "$ORIGIN/../../../nvidia/cuda_cupti/lib"
+            "$ORIGIN/../../../nvidia/curand/lib"
+            "$ORIGIN/../../../nvidia/cufft/lib"
+            "$ORIGIN/../../../nvidia/cuda_nvrtc/lib"
+            "$ORIGIN/../../../nvidia/nvjitlink/lib"
+            "$ORIGIN/../../../nvidia/cudnn/lib"
+        )
+        string(REPLACE ";" ":" _NVIDIA_RPATH "${_NVIDIA_RPATH}")
+      else()
+        set(_NVIDIA_RPATH "$ORIGIN/../../../nvidia/cu${_CUDA_MAJOR}/lib:$ORIGIN/../../../nvidia/cudnn/lib")
+      endif()
       set_target_properties(
         vsort
-        PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../../../nvidia/cu${_CUDA_MAJOR}/lib;$ORIGIN/../../../nvidia/cudnn/lib"
+        PROPERTIES INSTALL_RPATH "$ORIGIN;${_NVIDIA_RPATH}"
       )
     else()
       set_target_properties(vsort PROPERTIES INSTALL_RPATH "$ORIGIN")
